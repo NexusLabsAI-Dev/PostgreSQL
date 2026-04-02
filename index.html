@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Práctica SQL · Fer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #21262d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --dim: #3b4755;
+    --code: #79c0ff;
+  }
+
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left .label { font-size: 10px; color: var(--accent, #4ade80); letter-spacing: 3px; margin-bottom: 2px; }
+  .header-left h1 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; }
+  .progress-wrap { display: flex; align-items: center; gap: 14px; }
+  .progress-label { text-align: right; }
+  .progress-label .pl { font-size: 10px; color: var(--muted); }
+  .progress-label .pn { font-size: 22px; font-weight: 700; color: var(--accent, #4ade80); }
+  .progress-ring { position: relative; width: 72px; height: 72px; }
+  .progress-ring svg { transform: rotate(-90deg); }
+  .progress-ring .ring-track { fill: none; stroke: var(--border); stroke-width: 3; }
+  .progress-ring .ring-fill { fill: none; stroke: var(--accent, #4ade80); stroke-width: 3; stroke-linecap: round; transition: stroke-dasharray 0.4s ease; }
+  .progress-ring .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 11px; color: var(--muted); text-align: center; line-height: 1.3; }
+
+  /* LAYOUT */
+  .layout { display: flex; flex: 1; overflow: hidden; height: calc(100vh - 65px); }
+
+  /* SIDEBAR */
+  aside {
+    width: 210px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    flex-shrink: 0;
+    padding: 12px 0;
+  }
+  .nav-item {
+    padding: 9px 16px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.03); }
+  .nav-item.active { background: var(--bg); border-left-color: var(--item-color); }
+  .nav-item .fase-label { font-size: 9px; letter-spacing: 2.5px; margin-bottom: 2px; color: var(--item-color); }
+  .nav-item .fase-title { font-size: 11px; color: var(--muted); line-height: 1.3; }
+  .nav-item.active .fase-title { color: var(--text); font-weight: 600; }
+  .nav-item .fase-prog { font-size: 10px; color: var(--dim); margin-top: 3px; }
+  .nav-divider { height: 1px; background: var(--border); margin: 10px 0; }
+  .nav-schema { padding: 9px 16px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; }
+  .nav-schema:hover { background: rgba(255,255,255,0.03); }
+  .nav-schema.active { background: var(--bg); border-left-color: #60a5fa; }
+  .nav-schema .fase-label { font-size: 9px; letter-spacing: 2.5px; color: #60a5fa; margin-bottom: 2px; }
+  .nav-schema .fase-title { font-size: 11px; color: var(--muted); }
+  .nav-schema.active .fase-title { color: var(--text); }
+
+  /* MAIN */
+  main { flex: 1; overflow-y: auto; padding: 24px; }
+
+  .fase-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 22px; }
+  .fase-header .fl { font-size: 10px; letter-spacing: 3px; }
+  .fase-header h2 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .card.done { border-color: color-mix(in srgb, var(--card-color) 35%, transparent); }
+
+  .card-head {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .card-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .card-id { font-size: 11px; color: var(--muted); }
+  .badge {
+    font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
+    padding: 2px 8px; border-radius: 20px; border: 1px solid;
+  }
+  .badge-nivel { }
+  .badge-concepto { color: var(--muted); border-color: var(--border); }
+
+  .btn-done {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid var(--dim);
+    background: transparent;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .btn-done.active {
+    background: var(--card-color);
+    border-color: var(--card-color);
+    color: #0d1117;
+    font-weight: 700;
+  }
+
+  .card-body { padding: 16px 18px; }
+  .enunciado { font-size: 13px; line-height: 1.7; color: var(--text); margin-bottom: 14px; white-space: pre-line; }
+
+  .pista {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--dim);
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
+  .pista span { color: var(--dim); margin-right: 6px; }
+
+  .btn-sol {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 6px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--card-color) 40%, transparent);
+    color: var(--card-color);
+    transition: all 0.15s;
+    margin-bottom: 0;
+  }
+  .btn-sol:hover { background: color-mix(in srgb, var(--card-color) 10%, transparent); }
+
+  .solucion {
+    display: none;
+    margin-top: 14px;
+  }
+  .solucion.visible { display: block; }
+  .solucion pre {
+    background: var(--bg);
+    border: 1px solid color-mix(in srgb, var(--card-color) 25%, transparent);
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 13px;
+    color: var(--code);
+    overflow-x: auto;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+
+  /* SCHEMA */
+  .schema-section { }
+  .schema-section p { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+  .schema-section pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    font-size: 12px;
+    color: var(--code);
+    overflow-x: auto;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+
+  aside::-webkit-scrollbar, main::-webkit-scrollbar { width: 4px; }
+  aside::-webkit-scrollbar-track, main::-webkit-scrollbar-track { background: transparent; }
+  aside::-webkit-scrollbar-thumb, main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="label" id="header-label">NEXUS LABS AI / SQL TRAINING</div>
+    <h1>Práctica Intensiva de SQL</h1>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <div class="pl">PROGRESO</div>
+      <div class="pn" id="pct-text">0%</div>
+    </div>
+    <div class="progress-ring">
+      <svg viewBox="0 0 36 36" width="72" height="72">
+        <circle class="ring-track" cx="18" cy="18" r="15.9"/>
+        <circle class="ring-fill" id="ring-fill" cx="18" cy="18" r="15.9" stroke-dasharray="0 100"/>
+      </svg>
+      <div class="ring-text" id="ring-text">0/27</div>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside id="sidebar"></aside>
+  <main id="main"></main>
+</div>
+
+<script>
+const SCHEMA = `-- ============================================
+-- BASE DE DATOS DE PRÁCTICA · Fer · SQL
+-- ============================================
+
+CREATE TABLE departamentos (
+  id_dep   SERIAL PRIMARY KEY,
+  nombre   VARCHAR(100) NOT NULL,
+  ciudad   VARCHAR(100)
+);
+
+CREATE TABLE empleados (
+  id_emp    SERIAL PRIMARY KEY,
+  nombre    VARCHAR(100) NOT NULL,
+  puesto    VARCHAR(100),
+  salario   NUMERIC(10,2),
+  fecha_ing DATE,
+  id_dep    INT REFERENCES departamentos(id_dep)
+);
+
+CREATE TABLE proyectos (
+  id_proy     SERIAL PRIMARY KEY,
+  nombre      VARCHAR(150) NOT NULL,
+  presupuesto NUMERIC(12,2),
+  estado      VARCHAR(20) CHECK (estado IN ('activo','pausado','cerrado'))
+);
+
+CREATE TABLE asignaciones (
+  id_emp  INT REFERENCES empleados(id_emp),
+  id_proy INT REFERENCES proyectos(id_proy),
+  horas   INT,
+  PRIMARY KEY (id_emp, id_proy)
+);
+
+INSERT INTO departamentos VALUES
+  (1,'Tecnología','Ciudad de México'),
+  (2,'Ventas','Guadalajara'),
+  (3,'Finanzas','Ciudad de México'),
+  (4,'Recursos Humanos','Monterrey');
+
+INSERT INTO empleados VALUES
+  (1,'Ana Torres','Desarrolladora',42000,'2020-03-15',1),
+  (2,'Luis Ramos','Analista',35000,'2019-08-01',1),
+  (3,'Carmen Vega','Gerente de Ventas',58000,'2018-01-10',2),
+  (4,'Jorge Díaz','Vendedor',28000,'2021-06-20',2),
+  (5,'Sofía León','Contadora',38000,'2020-11-05',3),
+  (6,'Marco Ruiz','Director Financiero',72000,'2017-04-22',3),
+  (7,'Paula Méndez','Reclutadora',31000,'2022-02-14',4),
+  (8,'Iván Cruz','Desarrollador',45000,'2021-09-30',1),
+  (9,'Elena Soto','Vendedora',26000,'2023-01-08',2),
+  (10,'Roberto Gil','Sin asignar',29000,'2022-07-19',NULL);
+
+INSERT INTO proyectos VALUES
+  (1,'App Móvil Clientes',150000,'activo'),
+  (2,'Migración Cloud',320000,'activo'),
+  (3,'CRM Interno',90000,'pausado'),
+  (4,'Auditoría Fiscal',45000,'cerrado');
+
+INSERT INTO asignaciones VALUES
+  (1,1,120),(1,2,80),(2,2,200),(2,3,60),
+  (3,3,40),(4,1,30),(5,4,150),(6,4,50),
+  (7,3,20),(8,1,180),(8,2,90),(9,1,10);`;
+
+const fases = [
+  {
+    fase: "FASE 1", titulo: "SELECT Básico", color: "#4ade80",
+    ejercicios: [
+      { id:"1.1", nivel:"Básico", concepto:"SELECT *",
+        enunciado:"Obtén todos los datos de la tabla empleados.",
+        pista:"Usa SELECT * para obtener todas las columnas.",
+        respuesta:"SELECT * FROM empleados;" },
+      { id:"1.2", nivel:"Básico", concepto:"SELECT columnas + ORDER BY",
+        enunciado:"Muestra solo el nombre, puesto y salario de todos los empleados, ordenados de mayor a menor salario.",
+        pista:"Selecciona columnas específicas y usa ORDER BY con DESC.",
+        respuesta:"SELECT nombre, puesto, salario\nFROM empleados\nORDER BY salario DESC;" },
+      { id:"1.3", nivel:"Básico", concepto:"WHERE + AND",
+        enunciado:"Lista los empleados que ganan más de $35,000 y pertenecen al departamento con id_dep = 1.",
+        pista:"Filtra con WHERE usando AND para combinar condiciones.",
+        respuesta:"SELECT nombre, puesto, salario\nFROM empleados\nWHERE salario > 35000\n  AND id_dep = 1;" },
+      { id:"1.4", nivel:"Básico", concepto:"LIKE + OR",
+        enunciado:"Busca todos los empleados cuyo nombre empiece con la letra 'A' o termine en 'ez'.",
+        pista:"LIKE con % como comodín: 'A%' para empieza con A, '%ez' para termina en ez. Combínalos con OR.",
+        respuesta:"SELECT nombre\nFROM empleados\nWHERE nombre LIKE 'A%'\n   OR nombre LIKE '%ez';" },
+      { id:"1.5", nivel:"Básico", concepto:"IS NULL",
+        enunciado:"Muestra los empleados que NO tienen departamento asignado (id_dep es NULL).",
+        pista:"Para comparar con NULL no se usa = sino IS NULL.",
+        respuesta:"SELECT nombre, puesto\nFROM empleados\nWHERE id_dep IS NULL;" }
+    ]
+  },
+  {
+    fase: "FASE 2", titulo: "Funciones Agregadas", color: "#60a5fa",
+    ejercicios: [
+      { id:"2.1", nivel:"Básico", concepto:"COUNT",
+        enunciado:"¿Cuántos empleados hay en total en la empresa?",
+        pista:"Usa COUNT(*) para contar filas.",
+        respuesta:"SELECT COUNT(*) AS total_empleados\nFROM empleados;" },
+      { id:"2.2", nivel:"Básico", concepto:"AVG / MAX / MIN",
+        enunciado:"Calcula el salario promedio, el salario máximo y el mínimo de toda la empresa.",
+        pista:"Usa AVG, MAX y MIN en el mismo SELECT.",
+        respuesta:"SELECT \n  AVG(salario) AS promedio,\n  MAX(salario) AS maximo,\n  MIN(salario) AS minimo\nFROM empleados;" },
+      { id:"2.3", nivel:"Intermedio", concepto:"GROUP BY",
+        enunciado:"Muestra cuántos empleados hay en cada departamento (por id_dep) y el salario promedio de cada uno.",
+        pista:"Agrupa con GROUP BY. Las funciones agregadas operan por grupo.",
+        respuesta:"SELECT \n  id_dep,\n  COUNT(*) AS num_empleados,\n  AVG(salario) AS salario_promedio\nFROM empleados\nGROUP BY id_dep\nORDER BY id_dep;" },
+      { id:"2.4", nivel:"Intermedio", concepto:"HAVING",
+        enunciado:"Muestra solo los departamentos donde el salario promedio supere los $40,000.",
+        pista:"No puedes usar WHERE con funciones agregadas. Usa HAVING después del GROUP BY.",
+        respuesta:"SELECT \n  id_dep,\n  AVG(salario) AS salario_promedio\nFROM empleados\nGROUP BY id_dep\nHAVING AVG(salario) > 40000;" }
+    ]
+  },
+  {
+    fase: "FASE 3", titulo: "JOINs", color: "#f59e0b",
+    ejercicios: [
+      { id:"3.1", nivel:"Intermedio", concepto:"INNER JOIN",
+        enunciado:"Lista el nombre del empleado junto con el nombre de su departamento. Incluye solo empleados que tengan departamento asignado.",
+        pista:"INNER JOIN conecta dos tablas por una columna en común. Excluye automáticamente los registros sin coincidencia.",
+        respuesta:"SELECT e.nombre AS empleado, d.nombre AS departamento\nFROM empleados e\nINNER JOIN departamentos d ON e.id_dep = d.id_dep;" },
+      { id:"3.2", nivel:"Intermedio", concepto:"LEFT JOIN",
+        enunciado:"Lista TODOS los empleados, incluyendo los que no tienen departamento asignado. Muestra NULL donde no haya departamento.",
+        pista:"LEFT JOIN incluye todos los registros de la tabla izquierda, con NULL en columnas de la derecha cuando no hay coincidencia.",
+        respuesta:"SELECT e.nombre AS empleado, d.nombre AS departamento\nFROM empleados e\nLEFT JOIN departamentos d ON e.id_dep = d.id_dep;" },
+      { id:"3.3", nivel:"Intermedio", concepto:"JOIN de 3 tablas",
+        enunciado:"Muestra el nombre del empleado, el nombre del proyecto y las horas que trabajó en cada proyecto.",
+        pista:"Necesitas unir tres tablas: empleados → asignaciones → proyectos. Encadena dos JOINs.",
+        respuesta:"SELECT \n  e.nombre AS empleado,\n  p.nombre AS proyecto,\n  a.horas\nFROM empleados e\nINNER JOIN asignaciones a ON e.id_emp = a.id_emp\nINNER JOIN proyectos p ON a.id_proy = p.id_proy\nORDER BY e.nombre;" },
+      { id:"3.4", nivel:"Avanzado", concepto:"JOIN + GROUP BY + agregadas",
+        enunciado:"Muestra el nombre del departamento, cuántos empleados tiene y la suma total de sus salarios. Ordena por total de salarios de mayor a menor.",
+        pista:"Combina JOIN con GROUP BY. Agrupa por departamento después de unir las tablas.",
+        respuesta:"SELECT \n  d.nombre AS departamento,\n  COUNT(e.id_emp) AS empleados,\n  SUM(e.salario) AS total_salarios\nFROM departamentos d\nLEFT JOIN empleados e ON d.id_dep = e.id_dep\nGROUP BY d.id_dep, d.nombre\nORDER BY total_salarios DESC NULLS LAST;" }
+    ]
+  },
+  {
+    fase: "FASE 4", titulo: "Subqueries", color: "#a78bfa",
+    ejercicios: [
+      { id:"4.1", nivel:"Intermedio", concepto:"Subquery en WHERE",
+        enunciado:"Encuentra los empleados que ganan más que el promedio general de la empresa.",
+        pista:"Calcula el promedio en una subquery dentro del WHERE.",
+        respuesta:"SELECT nombre, salario\nFROM empleados\nWHERE salario > (SELECT AVG(salario) FROM empleados)\nORDER BY salario DESC;" },
+      { id:"4.2", nivel:"Intermedio", concepto:"IN + subquery",
+        enunciado:"Muestra los empleados que están asignados a al menos un proyecto.",
+        pista:"Usa una subquery con IN para filtrar por los id_emp que aparecen en asignaciones.",
+        respuesta:"SELECT nombre, puesto\nFROM empleados\nWHERE id_emp IN (\n  SELECT DISTINCT id_emp FROM asignaciones\n);" },
+      { id:"4.3", nivel:"Avanzado", concepto:"NOT IN + subquery",
+        enunciado:"Muestra los empleados que NO participan en ningún proyecto.",
+        pista:"Invierte la lógica anterior usando NOT IN.",
+        respuesta:"SELECT nombre, puesto\nFROM empleados\nWHERE id_emp NOT IN (\n  SELECT DISTINCT id_emp FROM asignaciones\n);" },
+      { id:"4.4", nivel:"Avanzado", concepto:"Subquery correlacionada",
+        enunciado:"Lista el nombre de cada empleado y cuántos proyectos tiene asignados. Incluye empleados sin proyectos (mostrar 0).",
+        pista:"Usa una subquery correlacionada en el SELECT, no en el WHERE.",
+        respuesta:"SELECT \n  nombre,\n  (SELECT COUNT(*) \n   FROM asignaciones a \n   WHERE a.id_emp = e.id_emp) AS num_proyectos\nFROM empleados e\nORDER BY num_proyectos DESC;" }
+    ]
+  },
+  {
+    fase: "FASE 5", titulo: "DML: INSERT, UPDATE, DELETE", color: "#f87171",
+    ejercicios: [
+      { id:"5.1", nivel:"Básico", concepto:"INSERT",
+        enunciado:"Agrega un nuevo departamento llamado 'Marketing' ubicado en 'Ciudad de México'.",
+        pista:"INSERT INTO tabla (col1, col2) VALUES (val1, val2). No incluyas id_dep si es SERIAL.",
+        respuesta:"INSERT INTO departamentos (nombre, ciudad)\nVALUES ('Marketing', 'Ciudad de México');" },
+      { id:"5.2", nivel:"Básico", concepto:"UPDATE con WHERE",
+        enunciado:"El empleado Roberto Gil (id 10) fue asignado al departamento de Tecnología (id 1). Actualiza su registro.",
+        pista:"UPDATE tabla SET columna = valor WHERE condición. El WHERE es crítico: sin él modificas TODOS los registros.",
+        respuesta:"UPDATE empleados\nSET id_dep = 1\nWHERE id_emp = 10;" },
+      { id:"5.3", nivel:"Intermedio", concepto:"UPDATE con cálculo",
+        enunciado:"Aplica un aumento del 10% a todos los empleados del departamento de Tecnología (id_dep = 1).",
+        pista:"Puedes usar el valor actual de la columna en el SET: SET salario = salario * 1.10",
+        respuesta:"UPDATE empleados\nSET salario = salario * 1.10\nWHERE id_dep = 1;" },
+      { id:"5.4", nivel:"Intermedio", concepto:"DELETE + integridad referencial",
+        enunciado:"Elimina a Elena Soto (id 9) de la empresa. Considera que puede tener asignaciones registradas.",
+        pista:"Por integridad referencial, primero elimina sus registros dependientes (asignaciones), luego el empleado.",
+        respuesta:"-- Primero eliminar registros dependientes\nDELETE FROM asignaciones\nWHERE id_emp = 9;\n\n-- Luego eliminar el empleado\nDELETE FROM empleados\nWHERE id_emp = 9;" }
+    ]
+  },
+  {
+    fase: "FASE 6", titulo: "DDL: Tablas y Constraints", color: "#34d399",
+    ejercicios: [
+      { id:"6.1", nivel:"Intermedio", concepto:"CREATE TABLE + constraints",
+        enunciado:"Crea una tabla 'clientes' con: id (clave primaria autoincremental), nombre (obligatorio, max 150 chars), email (único, obligatorio), saldo (decimal, por defecto 0), fecha_registro (fecha, por defecto la fecha actual).",
+        pista:"Usa SERIAL para autoincremento, NOT NULL para obligatorio, UNIQUE para únicos, DEFAULT para valores por defecto.",
+        respuesta:"CREATE TABLE clientes (\n  id             SERIAL PRIMARY KEY,\n  nombre         VARCHAR(150) NOT NULL,\n  email          VARCHAR(200) NOT NULL UNIQUE,\n  saldo          NUMERIC(10,2) DEFAULT 0,\n  fecha_registro DATE DEFAULT CURRENT_DATE\n);" },
+      { id:"6.2", nivel:"Intermedio", concepto:"ALTER TABLE",
+        enunciado:"Agrega una columna 'telefono' de tipo VARCHAR(20) a la tabla clientes.",
+        pista:"ALTER TABLE permite modificar una tabla existente. Para agregar columnas usa ADD COLUMN.",
+        respuesta:"ALTER TABLE clientes\nADD COLUMN telefono VARCHAR(20);" },
+      { id:"6.3", nivel:"Avanzado", concepto:"CREATE VIEW",
+        enunciado:"Crea una vista llamada 'vista_empleados_dep' que muestre: nombre del empleado, su puesto, salario y nombre del departamento. Luego consulta esa vista.",
+        pista:"CREATE VIEW nombre AS SELECT... Una vista es una query guardada que puedes consultar como si fuera una tabla.",
+        respuesta:"CREATE VIEW vista_empleados_dep AS\nSELECT \n  e.nombre AS empleado,\n  e.puesto,\n  e.salario,\n  d.nombre AS departamento\nFROM empleados e\nLEFT JOIN departamentos d ON e.id_dep = d.id_dep;\n\n-- Consultar la vista:\nSELECT * FROM vista_empleados_dep\nORDER BY departamento, salario DESC;" }
+    ]
+  },
+  {
+    fase: "FASE 7", titulo: "Seguridad y Permisos", color: "#fb923c",
+    ejercicios: [
+      { id:"7.1", nivel:"Intermedio", concepto:"CREATE USER + GRANT",
+        enunciado:"Crea un usuario llamado 'analista_ro' con contraseña 'Segura123!' que solo pueda hacer SELECT en la tabla empleados.",
+        pista:"CREATE USER para crear el usuario, GRANT SELECT ON tabla TO usuario para dar permiso específico.",
+        respuesta:"-- Crear el usuario\nCREATE USER analista_ro WITH PASSWORD 'Segura123!';\n\n-- Dar solo permiso de lectura en empleados\nGRANT SELECT ON empleados TO analista_ro;" },
+      { id:"7.2", nivel:"Intermedio", concepto:"REVOKE",
+        enunciado:"Revocar el permiso SELECT que se le dio a 'analista_ro' sobre la tabla empleados.",
+        pista:"REVOKE es el inverso de GRANT. La sintaxis es casi idéntica.",
+        respuesta:"REVOKE SELECT ON empleados FROM analista_ro;" },
+      { id:"7.3", nivel:"Avanzado", concepto:"ROLE + GRANT",
+        enunciado:"Crea un rol llamado 'rol_reportes' con permisos SELECT en empleados, departamentos y proyectos. Luego asigna ese rol a 'analista_ro'.",
+        pista:"Los roles son contenedores de permisos reutilizables. Crear el rol, darle permisos, luego asignarlo al usuario.",
+        respuesta:"-- Crear el rol\nCREATE ROLE rol_reportes;\n\n-- Asignar permisos al rol\nGRANT SELECT ON empleados TO rol_reportes;\nGRANT SELECT ON departamentos TO rol_reportes;\nGRANT SELECT ON proyectos TO rol_reportes;\n\n-- Asignar el rol al usuario\nGRANT rol_reportes TO analista_ro;" }
+    ]
+  },
+  {
+    fase: "FASE 8", titulo: "SQL Injection", color: "#e879f9",
+    ejercicios: [
+      { id:"8.1", nivel:"Avanzado", concepto:"SQLi + Prepared Statements",
+        enunciado:"Un sistema de login construye esta query dinámicamente:\nSELECT * FROM empleados WHERE nombre = '[INPUT]' AND password = '[INPUT]'\n\nUn atacante escribe como nombre: ' OR '1'='1\n¿Qué query se ejecuta realmente? ¿Por qué es peligroso?",
+        pista:"Escribe la query resultante sustituyendo el input del atacante. Analiza qué condición se evalúa.",
+        respuesta:"-- Query resultante con el input malicioso:\nSELECT * FROM empleados \nWHERE nombre = '' OR '1'='1' \n  AND password = 'cualquiercosa';\n\n-- POR QUÉ ES PELIGROSO:\n-- '1'='1' siempre es TRUE → el WHERE se cumple para TODOS los registros.\n-- El atacante obtiene acceso sin conocer ninguna contraseña.\n\n-- DEFENSA: Usar parámetros preparados (prepared statements)\n-- SELECT * FROM empleados WHERE nombre = $1 AND password = $2\n-- con los valores separados del SQL. La inyección es imposible." },
+      { id:"8.2", nivel:"Avanzado", concepto:"Mínimo privilegio + SQLi defense",
+        enunciado:"¿Cómo aplicarías el principio de mínimo privilegio para reducir el impacto de un SQLi exitoso en una app de reportes?",
+        pista:"Piensa en qué permisos necesita realmente una app que solo lee datos. Conecta esto con la Fase 7.",
+        respuesta:"-- Crear un usuario específico para la app (no usar el admin)\nCREATE USER app_reportes WITH PASSWORD 'AppReportes2024!';\n\n-- Dar SOLO los permisos necesarios\nGRANT SELECT ON empleados TO app_reportes;\nGRANT SELECT ON departamentos TO app_reportes;\nGRANT SELECT ON proyectos TO app_reportes;\n-- SIN GRANT en INSERT, UPDATE, DELETE, DROP\n\n-- Si un atacante explota SQLi en esta app,\n-- NO podrá borrar datos ni modificar registros.\n-- El daño queda contenido.\n-- Relevante: CompTIA Security+ dominio Access Control" }
+    ]
+  }
+];
+
+const nivelColors = { "Básico": "#4ade80", "Intermedio": "#f59e0b", "Avanzado": "#f87171" };
+const completados = {};
+const revelados = {};
+let faseActiva = 0;
+let verSchema = false;
+
+const totalEjs = fases.reduce((a, f) => a + f.ejercicios.length, 0);
+
+function totalComp() {
+  return Object.values(completados).filter(Boolean).length;
+}
+
+function updateProgress() {
+  const comp = totalComp();
+  const pct = Math.round((comp / totalEjs) * 100);
+  document.getElementById('pct-text').textContent = pct + '%';
+  document.getElementById('ring-text').textContent = comp + '/' + totalEjs;
+  document.getElementById('ring-fill').setAttribute('stroke-dasharray', pct + ' ' + (100 - pct));
+  const color = faseActiva < fases.length ? fases[faseActiva].color : '#60a5fa';
+  document.getElementById('ring-fill').style.stroke = color;
+  document.getElementById('pct-text').style.color = color;
+  renderSidebar();
+}
+
+function renderSidebar() {
+  const sb = document.getElementById('sidebar');
+  let html = '';
+  fases.forEach((f, i) => {
+    const comp = f.ejercicios.filter(e => completados[e.id]).length;
+    const active = !verSchema && i === faseActiva;
+    html += `<div class="nav-item ${active ? 'active' : ''}" style="--item-color:${f.color}" onclick="setFase(${i})">
+      <div class="fase-label">${f.fase}</div>
+      <div class="fase-title">${f.titulo}</div>
+      <div class="fase-prog">${comp}/${f.ejercicios.length} completados</div>
+    </div>`;
+  });
+  html += `<div class="nav-divider"></div>`;
+  html += `<div class="nav-schema ${verSchema ? 'active' : ''}" onclick="setSchema()">
+    <div class="fase-label">REFERENCIA</div>
+    <div class="fase-title">Schema SQL</div>
+  </div>`;
+  sb.innerHTML = html;
+}
+
+function renderMain() {
+  const main = document.getElementById('main');
+  if (verSchema) {
+    main.innerHTML = `<div class="schema-section">
+      <p>Ejecuta este script en PostgreSQL para tener la base de datos de práctica lista.</p>
+      <pre>${SCHEMA}</pre>
+    </div>`;
+    return;
+  }
+  const f = fases[faseActiva];
+  let html = `<div class="fase-header">
+    <span class="fl" style="color:${f.color}">${f.fase}</span>
+    <h2>${f.titulo}</h2>
+  </div>`;
+  f.ejercicios.forEach(ej => {
+    const done = completados[ej.id];
+    const rev = revelados[ej.id];
+    const nc = nivelColors[ej.nivel];
+    html += `<div class="card ${done ? 'done' : ''}" style="--card-color:${f.color}">
+      <div class="card-head">
+        <div class="card-meta">
+          <span class="card-id">Ejercicio ${ej.id}</span>
+          <span class="badge badge-nivel" style="color:${nc};border-color:${nc}55">${ej.nivel.toUpperCase()}</span>
+          <span class="badge badge-concepto">${ej.concepto}</span>
+        </div>
+        <button class="btn-done ${done ? 'active' : ''}" style="--card-color:${f.color}" onclick="toggleDone('${ej.id}')">
+          ${done ? '✓ Completado' : 'Marcar listo'}
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="enunciado">${ej.enunciado}</div>
+        <div class="pista"><span>💡 Pista:</span>${ej.pista}</div>
+        <button class="btn-sol" onclick="toggleRev('${ej.id}')">
+          ${rev ? '▲ Ocultar solución' : '▼ Ver solución'}
+        </button>
+        <div class="solucion ${rev ? 'visible' : ''}">
+          <pre>${ej.respuesta}</pre>
+        </div>
+      </div>
+    </div>`;
+  });
+  main.innerHTML = html;
+}
+
+function setFase(i) {
+  faseActiva = i;
+  verSchema = false;
+  renderSidebar();
+  renderMain();
+  updateProgress();
+}
+
+function setSchema() {
+  verSchema = true;
+  renderSidebar();
+  renderMain();
+}
+
+function toggleDone(id) {
+  completados[id] = !completados[id];
+  renderMain();
+  updateProgress();
+}
+
+function toggleRev(id) {
+  revelados[id] = !revelados[id];
+  renderMain();
+}
+
+// Init
+renderSidebar();
+renderMain();
+updateProgress();
+</script>
+</body>
+</html>
