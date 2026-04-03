@@ -3,228 +3,182 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Práctica SQL</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<title>SQL Trainer · Fer</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230d1117'/%3E%3C!-- Cilindro: cara superior (elipse) --%3E%3Cellipse cx='32' cy='18' rx='18' ry='7' fill='rgba(0,201,255,0.15)' stroke='%2300C9FF' stroke-width='1.8'/%3E%3C!-- Cuerpo del cilindro --%3E%3Crect x='14' y='18' width='36' height='26' fill='rgba(0,201,255,0.07)'/%3E%3Cline x1='14' y1='18' x2='14' y2='44' stroke='%2300C9FF' stroke-width='1.8'/%3E%3Cline x1='50' y1='18' x2='50' y2='44' stroke='%2300C9FF' stroke-width='1.8'/%3E%3C!-- Cara inferior (elipse) --%3E%3Cellipse cx='32' cy='44' rx='18' ry='7' fill='rgba(0,201,255,0.12)' stroke='%2300C9FF' stroke-width='1.8'/%3E%3C!-- Líneas internas decorativas --%3E%3Cellipse cx='32' cy='26' rx='18' ry='7' fill='none' stroke='%2300C9FF' stroke-width='0.8' opacity='0.35'/%3E%3Cellipse cx='32' cy='34' rx='18' ry='7' fill='none' stroke='%2300C9FF' stroke-width='0.8' opacity='0.35'/%3E%3C/svg%3E"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #0d1117;
-    --surface: #161b22;
-    --border: #21262d;
-    --text: #e6edf3;
-    --muted: #8b949e;
-    --dim: #3b4755;
-    --code: #79c0ff;
-  }
-
-  body {
-    font-family: 'JetBrains Mono', monospace;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* HEADER */
-  header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .header-left .label { font-size: 10px; color: var(--accent, #4ade80); letter-spacing: 3px; margin-bottom: 2px; }
-  .header-left h1 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; }
-  .progress-wrap { display: flex; align-items: center; gap: 14px; }
-  .progress-label { text-align: right; }
-  .progress-label .pl { font-size: 10px; color: var(--muted); }
-  .progress-label .pn { font-size: 22px; font-weight: 700; color: var(--accent, #4ade80); }
-  .progress-ring { position: relative; width: 72px; height: 72px; }
-  .progress-ring svg { transform: rotate(-90deg); }
-  .progress-ring .ring-track { fill: none; stroke: var(--border); stroke-width: 3; }
-  .progress-ring .ring-fill { fill: none; stroke: var(--accent, #4ade80); stroke-width: 3; stroke-linecap: round; transition: stroke-dasharray 0.4s ease; }
-  .progress-ring .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 11px; color: var(--muted); text-align: center; line-height: 1.3; }
-
-  /* LAYOUT */
-  .layout { display: flex; flex: 1; overflow: hidden; height: calc(100vh - 65px); }
-
-  /* SIDEBAR */
-  aside {
-    width: 210px;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    overflow-y: auto;
-    flex-shrink: 0;
-    padding: 12px 0;
-  }
-  .nav-item {
-    padding: 9px 16px;
-    cursor: pointer;
-    border-left: 3px solid transparent;
-    transition: all 0.15s;
-  }
-  .nav-item:hover { background: rgba(255,255,255,0.03); }
-  .nav-item.active { background: var(--bg); border-left-color: var(--item-color); }
-  .nav-item .fase-label { font-size: 9px; letter-spacing: 2.5px; margin-bottom: 2px; color: var(--item-color); }
-  .nav-item .fase-title { font-size: 11px; color: var(--muted); line-height: 1.3; }
-  .nav-item.active .fase-title { color: var(--text); font-weight: 600; }
-  .nav-item .fase-prog { font-size: 10px; color: var(--dim); margin-top: 3px; }
-  .nav-divider { height: 1px; background: var(--border); margin: 10px 0; }
-  .nav-schema { padding: 9px 16px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; }
-  .nav-schema:hover { background: rgba(255,255,255,0.03); }
-  .nav-schema.active { background: var(--bg); border-left-color: #60a5fa; }
-  .nav-schema .fase-label { font-size: 9px; letter-spacing: 2.5px; color: #60a5fa; margin-bottom: 2px; }
-  .nav-schema .fase-title { font-size: 11px; color: var(--muted); }
-  .nav-schema.active .fase-title { color: var(--text); }
-
-  /* MAIN */
-  main { flex: 1; overflow-y: auto; padding: 24px; }
-
-  .fase-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 22px; }
-  .fase-header .fl { font-size: 10px; letter-spacing: 3px; }
-  .fase-header h2 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; }
-
-  /* CARD */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    margin-bottom: 20px;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-  .card.done { border-color: color-mix(in srgb, var(--card-color) 35%, transparent); }
-
-  .card-head {
-    padding: 12px 18px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .card-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .card-id { font-size: 11px; color: var(--muted); }
-  .badge {
-    font-size: 9px; font-weight: 700; letter-spacing: 1.5px;
-    padding: 2px 8px; border-radius: 20px; border: 1px solid;
-  }
-  .badge-nivel { }
-  .badge-concepto { color: var(--muted); border-color: var(--border); }
-
-  .btn-done {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    padding: 4px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    border: 1px solid var(--dim);
-    background: transparent;
-    color: var(--muted);
-    transition: all 0.15s;
-  }
-  .btn-done.active {
-    background: var(--card-color);
-    border-color: var(--card-color);
-    color: #0d1117;
-    font-weight: 700;
-  }
-
-  .card-body { padding: 16px 18px; }
-  .enunciado { font-size: 13px; line-height: 1.7; color: var(--text); margin-bottom: 14px; white-space: pre-line; }
-
-  .pista {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--dim);
-    border-radius: 6px;
-    padding: 10px 14px;
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 14px;
-    line-height: 1.6;
-  }
-  .pista span { color: var(--dim); margin-right: 6px; }
-
-  .btn-sol {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    padding: 6px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    background: transparent;
-    border: 1px solid color-mix(in srgb, var(--card-color) 40%, transparent);
-    color: var(--card-color);
-    transition: all 0.15s;
-    margin-bottom: 0;
-  }
-  .btn-sol:hover { background: color-mix(in srgb, var(--card-color) 10%, transparent); }
-
-  .solucion {
-    display: none;
-    margin-top: 14px;
-  }
-  .solucion.visible { display: block; }
-  .solucion pre {
-    background: var(--bg);
-    border: 1px solid color-mix(in srgb, var(--card-color) 25%, transparent);
-    border-radius: 8px;
-    padding: 16px;
-    font-size: 13px;
-    color: var(--code);
-    overflow-x: auto;
-    line-height: 1.7;
-    white-space: pre-wrap;
-  }
-
-  /* SCHEMA */
-  .schema-section { }
-  .schema-section p { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
-  .schema-section pre {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px;
-    font-size: 12px;
-    color: var(--code);
-    overflow-x: auto;
-    line-height: 1.7;
-    white-space: pre-wrap;
-  }
-
-  aside::-webkit-scrollbar, main::-webkit-scrollbar { width: 4px; }
-  aside::-webkit-scrollbar-track, main::-webkit-scrollbar-track { background: transparent; }
-  aside::-webkit-scrollbar-thumb, main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--surface:#161b22;--border:#21262d;--text:#e6edf3;--muted:#8b949e;--dim:#3b4755;--code:#79c0ff;--green:#4ade80;--red:#f87171;--yellow:#f59e0b;--blue:#60a5fa;--purple:#a78bfa}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+/* LOADING */
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:14px}
+#loading.hidden{display:none}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-text{font-size:12px;color:var(--muted)}
+/* HEADER */
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;flex-wrap:wrap}
+.brand .sub{font-size:8px;color:var(--muted);letter-spacing:3px;margin-bottom:1px}
+.brand h1{font-family:'Syne',sans-serif;font-size:17px;font-weight:800}
+.hprog{display:flex;align-items:center;gap:14px}
+.hprog-nums .pct{font-size:20px;font-weight:700;color:var(--green);transition:color .3s}
+.hprog-nums .det{font-size:10px;color:var(--muted);text-align:right}
+.pbar-wrap{width:130px}
+.pbar-track{height:4px;background:var(--border);border-radius:2px}
+.pbar-fill{height:4px;background:var(--green);border-radius:2px;width:0%;transition:width .4s,background .3s}
+.db-badge{font-size:9px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);color:var(--muted);letter-spacing:1px}
+.db-badge.ok{color:var(--green);border-color:#4ade8044}
+/* LAYOUT */
+.layout{display:flex;flex:1;overflow:hidden}
+/* SIDEBAR */
+aside{width:224px;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0}
+.nav-item{padding:9px 14px;cursor:pointer;border-left:3px solid transparent;transition:all .15s}
+.nav-item:hover{background:rgba(255,255,255,.02)}
+.nav-item.active{background:var(--bg);border-left-color:var(--nc,#60a5fa)}
+.ni-num{font-size:8px;letter-spacing:2px;color:var(--nc,var(--muted));margin-bottom:2px}
+.ni-title{font-size:11px;color:var(--muted);line-height:1.3}
+.nav-item.active .ni-title{color:var(--text);font-weight:600}
+.ni-cmds{display:flex;flex-wrap:wrap;gap:2px;margin-top:5px}
+.ni-cmd{font-size:7px;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,.03);color:var(--dim);border:1px solid var(--border);transition:all .15s}
+.nav-item.active .ni-cmd{color:var(--nc,var(--blue));border-color:color-mix(in srgb,var(--nc,#60a5fa) 35%,transparent)}
+.ni-prog{margin-top:5px;display:flex;align-items:center;gap:5px}
+.ni-bar{flex:1;height:2px;background:var(--border);border-radius:1px}
+.ni-bar-fill{height:100%;border-radius:1px;background:var(--nc,var(--blue));transition:width .3s}
+.ni-txt{font-size:9px;color:var(--dim);white-space:nowrap}
+.nav-divider{height:1px;background:var(--border);margin:4px 0}
+/* MAIN */
+main{flex:1;overflow-y:auto;padding:20px 24px}
+main::-webkit-scrollbar{width:4px}
+main::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+aside::-webkit-scrollbar{width:4px}
+aside::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+/* BLOCK HEADER */
+.blk-head{display:flex;align-items:baseline;gap:10px;margin-bottom:18px}
+.blk-lbl{font-size:9px;letter-spacing:3px}
+.blk-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800}
+/* EXERCISE CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:18px;overflow:hidden;transition:border-color .2s}
+.card.state-correct{border-color:#4ade8066}
+.card.state-failed{border-color:#f8717155}
+.card-head{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+.c-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.c-id{font-size:10px;color:var(--muted)}
+.badge{font-size:8px;font-weight:700;letter-spacing:.8px;padding:2px 7px;border-radius:10px;border:1px solid}
+.b-basico{color:#4ade80;border-color:#4ade8055}
+.b-intermedio{color:#f59e0b;border-color:#f59e0b55}
+.b-avanzado{color:#f87171;border-color:#f8717155}
+.b-tag{color:var(--muted);border-color:var(--border)}
+.c-status{font-size:10px;color:var(--dim);white-space:nowrap}
+.c-status.done{color:var(--green)}
+.card-body{padding:16px}
+/* ENUNCIADO */
+.enunciado{font-size:13px;line-height:1.75;color:var(--text);margin-bottom:12px;white-space:pre-line}
+.nota{font-size:11px;color:var(--yellow);background:#f59e0b0d;border:1px solid #f59e0b33;border-radius:5px;padding:7px 11px;margin-bottom:12px;line-height:1.5}
+/* HINTS */
+.hints{margin-bottom:12px}
+.hint{font-size:11px;background:var(--bg);border:1px solid var(--border);border-left:3px solid;border-radius:5px;padding:7px 11px;margin-bottom:6px;line-height:1.5;display:none}
+.hint.show{display:block}
+.hint-1{border-left-color:var(--blue);color:var(--blue)}
+.hint-2{border-left-color:var(--purple);color:var(--purple)}
+.hint span{font-weight:700;margin-right:4px}
+/* MULTIPLE CHOICE */
+.options-list{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.opt{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:12px;color:var(--muted);transition:all .15s;user-select:none}
+.opt:hover:not(.disabled){border-color:var(--dim);color:var(--text)}
+.opt.selected{border-color:#60a5fa55;color:var(--text);background:#60a5fa09}
+.opt.opt-correct{border-color:#4ade8066;background:#4ade800a;color:var(--green)}
+.opt.opt-wrong{border-color:#f8717155;background:#f871710a;color:var(--red)}
+.opt.disabled{cursor:default}
+.opt-dot{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.opt.selected .opt-dot{border-color:var(--blue);background:var(--blue)}
+.opt.opt-correct .opt-dot{border-color:var(--green);background:var(--green)}
+.opt.opt-wrong .opt-dot{border-color:var(--red);background:var(--red)}
+.expl{font-size:12px;color:var(--muted);background:var(--bg);border:1px solid #4ade8033;border-radius:5px;padding:9px 12px;margin-bottom:12px;line-height:1.5;display:none}
+.expl.show{display:block}
+.expl strong{color:var(--green)}
+/* SQL EDITOR */
+.editor-label{font-size:8px;color:var(--dim);letter-spacing:2px;margin-bottom:5px}
+.sql-area{width:100%;min-height:90px;background:#010409;border:1px solid var(--border);border-radius:6px;padding:11px 13px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--code);resize:vertical;outline:none;transition:border-color .15s;line-height:1.65;tab-size:2;margin-bottom:10px}
+.sql-area:focus{border-color:var(--dim)}
+.sql-area.border-ok{border-color:#4ade8088}
+.sql-area.border-err{border-color:#f8717188}
+.act-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.btn-run{font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 16px;border-radius:6px;cursor:pointer;background:#238636;border:1px solid #2ea043;color:#fff;font-weight:700;transition:all .15s}
+.btn-run:hover:not(:disabled){background:#2ea043}
+.btn-run:disabled{opacity:.4;cursor:not-allowed}
+.btn-clear{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 11px;border-radius:6px;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--muted);transition:all .15s}
+.btn-clear:hover{border-color:var(--dim);color:var(--text)}
+.att-info{font-size:11px;color:var(--muted);margin-left:auto}
+.att-info.warn{color:var(--yellow)}
+.att-info.danger{color:var(--red)}
+/* RESULT */
+.msg{font-size:12px;padding:7px 12px;border-radius:5px;margin-bottom:10px;border:1px solid;line-height:1.5}
+.msg-ok{color:var(--green);background:#4ade800a;border-color:#4ade8033}
+.msg-err{color:var(--red);background:#f871710a;border-color:#f8717133}
+.msg-info{color:var(--muted);background:var(--bg);border-color:var(--border)}
+.tbl-wrap{overflow-x:auto;margin-bottom:4px}
+table.res{width:100%;border-collapse:collapse;font-size:11px}
+table.res th{background:#1c2128;padding:5px 10px;text-align:left;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;font-weight:600}
+table.res td{padding:4px 10px;border-bottom:1px solid #1c2128;color:var(--text);white-space:nowrap}
+table.res tr:last-child td{border-bottom:none}
+table.res tr:hover td{background:rgba(255,255,255,.015)}
+/* SOLUTION */
+.sol-wrap{display:none;margin-top:12px}
+.sol-wrap.show{display:block}
+.sol-lbl{font-size:8px;color:var(--yellow);letter-spacing:2px;margin-bottom:5px}
+.sol-code{background:#010409;border:1px solid #f59e0b44;border-radius:6px;padding:12px;font-size:13px;color:var(--code);white-space:pre-wrap;line-height:1.65}
+/* SCHEMA PAGE */
+.schema-intro{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6}
+.schema-section{margin-bottom:20px}
+.schema-section h3{font-size:9px;color:var(--blue);letter-spacing:3px;margin-bottom:8px}
+.schema-code{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;font-size:12px;color:var(--code);line-height:1.7;white-space:pre-wrap;overflow-x:auto}
+/* TEORIA SUBMIT */
+.btn-verify{font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 16px;border-radius:6px;cursor:pointer;background:transparent;border:1px solid var(--blue);color:var(--blue);transition:all .15s}
+.btn-verify:hover:not(:disabled){background:#60a5fa11}
+.btn-verify:disabled{opacity:.4;cursor:not-allowed}
+/* REFERENCE SECTION */
+.ref-section{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:22px;overflow:hidden}
+.ref-head{padding:11px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;border-bottom:1px solid var(--border)}
+.ref-head-left{display:flex;align-items:center;gap:9px}
+.ref-lbl{font-size:8px;letter-spacing:2.5px;font-weight:700}
+.ref-title{font-size:12px;color:var(--muted)}
+.ref-toggle{font-size:10px;color:var(--dim);transition:transform .2s}
+.ref-toggle.open{transform:rotate(180deg)}
+.ref-body{display:none;padding:14px 16px}
+.ref-body.open{display:block}
+.ref-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px}
+.ref-card{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:12px;transition:border-color .15s}
+.ref-card:hover{border-color:var(--dim)}
+.ref-cmd-name{font-size:13px;font-weight:700;margin-bottom:4px}
+.ref-cmd-desc{font-size:11px;color:var(--muted);margin-bottom:9px;line-height:1.5}
+.ref-sub{font-size:8px;letter-spacing:1.5px;color:var(--dim);margin-bottom:4px;margin-top:8px}
+.ref-code{background:#010409;border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-size:11px;color:var(--code);white-space:pre-wrap;line-height:1.55}
+.ref-ex{background:#010409;border:1px solid var(--border);border-radius:4px;padding:7px 10px;font-size:11px;color:#a5d6a7;white-space:pre-wrap;line-height:1.55}
+.ref-note{font-size:10px;color:var(--yellow);margin-top:6px;line-height:1.4}
 </style>
 </head>
 <body>
 
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="load-text">Iniciando motor SQL en el navegador...</div>
+</div>
+
 <header>
-  <div class="header-left">
-    <div class="label" id="header-label">NEXUS LABS AI / SQL TRAINING</div>
-    <h1>Práctica Intensiva de SQL</h1>
+  <div class="brand">
+    <div class="sub">NEXUS LABS AI · SQL TRAINER</div>
+    <h1>Práctica Interactiva de SQL</h1>
   </div>
-  <div class="progress-wrap">
-    <div class="progress-label">
-      <div class="pl">PROGRESO</div>
-      <div class="pn" id="pct-text">0%</div>
+  <div class="hprog">
+    <div class="hprog-nums">
+      <div class="pct" id="pct">0%</div>
+      <div class="det" id="det">0 / 0</div>
     </div>
-    <div class="progress-ring">
-      <svg viewBox="0 0 36 36" width="72" height="72">
-        <circle class="ring-track" cx="18" cy="18" r="15.9"/>
-        <circle class="ring-fill" id="ring-fill" cx="18" cy="18" r="15.9" stroke-dasharray="0 100"/>
-      </svg>
-      <div class="ring-text" id="ring-text">0/27</div>
+    <div class="pbar-wrap">
+      <div class="pbar-track"><div class="pbar-fill" id="pbar"></div></div>
     </div>
+    <div class="db-badge" id="dbbadge">DB: cargando</div>
   </div>
 </header>
 
@@ -234,344 +188,1280 @@
 </div>
 
 <script>
-const SCHEMA = `-- ============================================
--- BASE DE DATOS DE PRÁCTICA · Fer · SQL
--- ============================================
-
+// ─────────────────────────────────────────
+// SCHEMA
+// ─────────────────────────────────────────
+const BASE_SCHEMA = `
 CREATE TABLE departamentos (
-  id_dep   SERIAL PRIMARY KEY,
-  nombre   VARCHAR(100) NOT NULL,
-  ciudad   VARCHAR(100)
+  id_dep INTEGER PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  ciudad TEXT
+);
+CREATE TABLE empleados (
+  id_emp INTEGER PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  puesto TEXT,
+  salario REAL,
+  fecha_ing TEXT,
+  id_dep INTEGER REFERENCES departamentos(id_dep),
+  jefe_id INTEGER REFERENCES empleados(id_emp)
+);
+CREATE TABLE proyectos (
+  id_proy INTEGER PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  presupuesto REAL,
+  estado TEXT CHECK(estado IN ('activo','pausado','cerrado'))
+);
+CREATE TABLE asignaciones (
+  id_emp INTEGER REFERENCES empleados(id_emp),
+  id_proy INTEGER REFERENCES proyectos(id_proy),
+  horas INTEGER,
+  PRIMARY KEY(id_emp,id_proy)
+);
+INSERT INTO departamentos VALUES
+  (1,'Tecnología','Ciudad de México'),
+  (2,'Ventas','Guadalajara'),
+  (3,'Finanzas','Ciudad de México'),
+  (4,'Recursos Humanos','Monterrey');
+INSERT INTO empleados VALUES
+  (1,'Ana Torres','Desarrolladora',42000,'2020-03-15',1,NULL),
+  (2,'Luis Ramos','Analista',35000,'2019-08-01',1,1),
+  (3,'Carmen Vega','Gerente de Ventas',58000,'2018-01-10',2,NULL),
+  (4,'Jorge Díaz','Vendedor',28000,'2021-06-20',2,3),
+  (5,'Sofía León','Contadora',38000,'2020-11-05',3,6),
+  (6,'Marco Ruiz','Director Financiero',72000,'2017-04-22',3,NULL),
+  (7,'Paula Méndez','Reclutadora',31000,'2022-02-14',4,NULL),
+  (8,'Iván Cruz','Desarrollador',45000,'2021-09-30',1,1),
+  (9,'Elena Soto','Vendedora',26000,'2023-01-08',2,3),
+  (10,'Roberto Gil','Sin asignar',29000,'2022-07-19',NULL,NULL);
+INSERT INTO proyectos VALUES
+  (1,'App Móvil Clientes',150000,'activo'),
+  (2,'Migración Cloud',320000,'activo'),
+  (3,'CRM Interno',90000,'pausado'),
+  (4,'Auditoría Fiscal',45000,'cerrado');
+INSERT INTO asignaciones VALUES
+  (1,1,120),(1,2,80),(2,2,200),(2,3,60),
+  (3,3,40),(4,1,30),(5,4,150),(6,4,50),
+  (7,3,20),(8,1,180),(8,2,90),(9,1,10);`;
+
+// ─────────────────────────────────────────
+// EXERCISE DATA
+// ─────────────────────────────────────────
+const BLOCKS = [
+{id:'b0',num:'BLOQUE 0',title:'Comandos psql',color:'#94a3b8',
+ cmds:['\\l','\\dt','\\d','\\du','\\q','\\i','\\c','\\h'],
+ tipo:'teoria',
+ ejercicios:[
+  {id:'b0-1',nivel:'Básico',tag:'\\l',
+   q:'¿Qué meta-comando de psql usas para ver la lista de todas las bases de datos disponibles?',
+   opts:['\\dt','\\l','\\d','\\du'],ans:1,
+   expl:'<strong>\\l</strong> viene de "list". Muestra todas las BDs con su dueño y codificación. En PostgreSQL también puedes usar <strong>\\list</strong>.'},
+  {id:'b0-2',nivel:'Básico',tag:'\\d tabla',
+   q:'Quieres conocer las columnas, tipos de datos y constraints de la tabla "empleados". ¿Qué escribes en psql?',
+   opts:['DESCRIBE empleados;','\\dt empleados','\\d empleados','SHOW COLUMNS empleados;'],ans:2,
+   expl:'<strong>\\d tabla</strong> describe la estructura interna de una tabla. Muestra columnas, tipos, constraints e índices. En MySQL el equivalente es DESCRIBE tabla;'},
+  {id:'b0-3',nivel:'Básico',tag:'\\dt',
+   q:'¿Cómo listas únicamente las tablas del esquema actual en psql?',
+   opts:['\\l','\\tables','\\dt','\\d'],ans:2,
+   expl:'<strong>\\dt</strong> = describe tables. Muestra solo tablas (no vistas, índices ni secuencias). <strong>\\d</strong> sin argumento muestra todos los objetos del esquema.'},
+  {id:'b0-4',nivel:'Básico',tag:'\\i archivo',
+   q:'Tienes un archivo "schema.sql" en tu disco y quieres ejecutarlo desde psql sin salir. ¿Qué comando usas?',
+   opts:['RUN schema.sql;','\\i schema.sql','EXEC schema.sql','SOURCE schema.sql'],ans:1,
+   expl:'<strong>\\i archivo.sql</strong> ejecuta un archivo SQL externo directamente desde psql. Es equivalente a pegar todo el contenido en el terminal.'},
+  {id:'b0-5',nivel:'Intermedio',tag:'\\dp',
+   q:'¿Qué meta-comando muestra los permisos (GRANT/REVOKE) sobre una tabla específica?',
+   opts:['\\du tabla','\\dp tabla','\\dg tabla','\\dc tabla'],ans:1,
+   expl:'<strong>\\dp tabla</strong> muestra la tabla de permisos (ACL = Access Control List) de un objeto. Muy útil en ciberseguridad para auditar quién tiene acceso a qué.'},
+]},
+
+{id:'b2',num:'BLOQUE 2',title:'Tablas — DDL',color:'#34d399',
+ cmds:['CREATE TABLE','ALTER TABLE','DROP TABLE','TRUNCATE','PRIMARY KEY','FOREIGN KEY'],
+ tipo:'sql',
+ ejercicios:[
+  {id:'b2-1',nivel:'Básico',tag:'CREATE TABLE',
+   q:'Crea una tabla llamada "clientes" con las columnas:\n- id: entero, clave primaria\n- nombre: texto, obligatorio\n- email: texto, único y obligatorio\n- saldo: número decimal, por defecto 0',
+   h1:'Usa INTEGER PRIMARY KEY para la clave primaria. NOT NULL para obligatorio. UNIQUE para único. DEFAULT 0 para el valor por defecto.',
+   h2:'CREATE TABLE clientes ( id INTEGER PRIMARY KEY, nombre TEXT NOT NULL, email TEXT NOT NULL UNIQUE, saldo REAL DEFAULT 0 );',
+   sol:`CREATE TABLE clientes (
+  id     INTEGER PRIMARY KEY,
+  nombre TEXT NOT NULL,
+  email  TEXT NOT NULL UNIQUE,
+  saldo  REAL DEFAULT 0
+);`,
+   tipo:'ddl',
+   verify:`SELECT name, "notnull", dflt_value FROM pragma_table_info('clientes') ORDER BY cid`,
+   nota:'En PostgreSQL usarías SERIAL en lugar de INTEGER para autoincremento. El concepto de constraints es idéntico.'},
+  {id:'b2-2',nivel:'Básico',tag:'ALTER TABLE ADD COLUMN',
+   q:'La tabla "empleados" ya existe. Agrégale una columna llamada "telefono" de tipo TEXT.',
+   h1:'ALTER TABLE permite modificar tablas existentes. Para agregar columnas usa ADD COLUMN.',
+   h2:'ALTER TABLE nombre_tabla ADD COLUMN nombre_columna TIPO;',
+   sol:`ALTER TABLE empleados ADD COLUMN telefono TEXT;`,
+   tipo:'dml',
+   verify:`SELECT name FROM pragma_table_info('empleados') WHERE name='telefono'`},
+  {id:'b2-3',nivel:'Intermedio',tag:'CREATE TABLE + FK',
+   q:'Crea una tabla "pagos" con:\n- id: entero, clave primaria\n- id_emp: entero, clave foránea hacia empleados(id_emp)\n- monto: número decimal\n- fecha: texto',
+   h1:'REFERENCES tabla(columna) define una llave foránea. La columna referenciada debe ser clave primaria.',
+   h2:'id_emp INTEGER REFERENCES empleados(id_emp)',
+   sol:`CREATE TABLE pagos (
+  id     INTEGER PRIMARY KEY,
+  id_emp INTEGER REFERENCES empleados(id_emp),
+  monto  REAL,
+  fecha  TEXT
+);`,
+   tipo:'ddl',
+   verify:`SELECT name FROM pragma_table_info('pagos') ORDER BY cid`},
+  {id:'b2-4',nivel:'Intermedio',tag:'DROP TABLE IF EXISTS',
+   q:'Elimina la tabla "pagos" solo si existe. Si no existe, que no dé error.',
+   h1:'IF EXISTS evita el error cuando la tabla no existe. Sin él, DROP TABLE falla si la tabla no está.',
+   h2:'DROP TABLE IF EXISTS nombre_tabla;',
+   sol:`DROP TABLE IF EXISTS pagos;`,
+   tipo:'dml',
+   verify:`SELECT name FROM sqlite_master WHERE type='table' AND name='pagos'`},
+  {id:'b2-5',nivel:'Avanzado',tag:'CHECK constraint',
+   q:'Crea una tabla "tickets" con:\n- id: entero, clave primaria\n- prioridad: texto que solo acepta los valores "baja", "media" o "alta"\n- estado: texto que solo acepta "abierto" o "cerrado"',
+   h1:'CHECK(columna IN (\'valor1\',\'valor2\')) restringe los valores permitidos en una columna.',
+   h2:'prioridad TEXT CHECK(prioridad IN (\'baja\',\'media\',\'alta\'))',
+   sol:`CREATE TABLE tickets (
+  id        INTEGER PRIMARY KEY,
+  prioridad TEXT CHECK(prioridad IN ('baja','media','alta')),
+  estado    TEXT CHECK(estado IN ('abierto','cerrado'))
+);`,
+   tipo:'ddl',
+   verify:`SELECT name FROM pragma_table_info('tickets') ORDER BY cid`},
+]},
+
+{id:'b5',num:'BLOQUE 5',title:'SELECT Consultas',color:'#4ade80',
+ cmds:['SELECT','WHERE','ORDER BY','LIMIT','OFFSET','LIKE','BETWEEN','IN','IS NULL','DISTINCT','CASE'],
+ tipo:'sql',
+ ejercicios:[
+  {id:'b5-1',nivel:'Básico',tag:'SELECT + ORDER BY',
+   q:'Muestra el nombre, puesto y salario de todos los empleados, ordenados de mayor a menor salario.',
+   h1:'SELECT col1, col2 FROM tabla ORDER BY columna DESC',
+   h2:'El ORDER BY va al final de la query. ASC es ascendente (predeterminado), DESC es descendente.',
+   sol:`SELECT nombre, puesto, salario FROM empleados ORDER BY salario DESC`,tipo:'select'},
+  {id:'b5-2',nivel:'Básico',tag:'WHERE + AND',
+   q:'Lista los empleados del departamento 1 que ganan más de $35,000.',
+   h1:'Combina dos condiciones con AND en el WHERE.',
+   h2:'WHERE id_dep = 1 AND salario > 35000',
+   sol:`SELECT nombre, salario FROM empleados WHERE id_dep=1 AND salario>35000`,tipo:'select'},
+  {id:'b5-3',nivel:'Básico',tag:'DISTINCT + LIMIT',
+   q:'Muestra los 3 salarios más altos distintos que existen en la empresa.',
+   h1:'DISTINCT elimina duplicados. LIMIT n devuelve solo los primeros n resultados.',
+   h2:'SELECT DISTINCT salario FROM empleados ORDER BY salario DESC LIMIT 3',
+   sol:`SELECT DISTINCT salario FROM empleados ORDER BY salario DESC LIMIT 3`,tipo:'select'},
+  {id:'b5-4',nivel:'Intermedio',tag:'BETWEEN + IS NULL',
+   q:'Lista los empleados con salario entre $30,000 y $50,000 que SÍ tienen departamento asignado.',
+   h1:'BETWEEN a AND b es equivalente a >= a AND <= b. IS NOT NULL verifica que el valor no sea nulo.',
+   h2:'WHERE salario BETWEEN 30000 AND 50000 AND id_dep IS NOT NULL',
+   sol:`SELECT nombre, salario, id_dep FROM empleados WHERE salario BETWEEN 30000 AND 50000 AND id_dep IS NOT NULL ORDER BY salario`,tipo:'select'},
+  {id:'b5-5',nivel:'Intermedio',tag:'CASE WHEN',
+   q:'Muestra el nombre de cada empleado y una columna "nivel_sueldo" que diga:\n- "Alto" si gana más de $50,000\n- "Medio" si gana entre $30,000 y $50,000\n- "Bajo" si gana menos de $30,000',
+   h1:'CASE WHEN condición THEN valor WHEN ... ELSE valor_default END',
+   h2:'SELECT nombre, CASE WHEN salario > 50000 THEN \'Alto\' WHEN salario >= 30000 THEN \'Medio\' ELSE \'Bajo\' END AS nivel_sueldo FROM empleados',
+   sol:`SELECT nombre, CASE WHEN salario>50000 THEN 'Alto' WHEN salario>=30000 THEN 'Medio' ELSE 'Bajo' END AS nivel_sueldo FROM empleados ORDER BY salario DESC`,tipo:'select'},
+]},
+
+{id:'b6',num:'BLOQUE 6',title:'Funciones Agregadas',color:'#60a5fa',
+ cmds:['COUNT','SUM','AVG','MAX','MIN','GROUP BY','HAVING','ROUND','COALESCE'],
+ tipo:'sql',
+ ejercicios:[
+  {id:'b6-1',nivel:'Básico',tag:'COUNT + AVG + MAX + MIN',
+   q:'Calcula en una sola query: total de empleados, salario promedio, salario máximo y salario mínimo.',
+   h1:'Puedes usar múltiples funciones agregadas en el mismo SELECT.',
+   h2:'SELECT COUNT(*), AVG(salario), MAX(salario), MIN(salario) FROM empleados',
+   sol:`SELECT COUNT(*) AS total, AVG(salario) AS promedio, MAX(salario) AS maximo, MIN(salario) AS minimo FROM empleados`,tipo:'select'},
+  {id:'b6-2',nivel:'Básico',tag:'GROUP BY',
+   q:'Muestra cuántos empleados hay en cada departamento (id_dep) y el salario promedio de cada uno. Ordena por número de empleados descendente.',
+   h1:'GROUP BY agrupa filas por el valor de una columna. Las funciones como COUNT operan por grupo.',
+   h2:'SELECT id_dep, COUNT(*) FROM empleados GROUP BY id_dep',
+   sol:`SELECT id_dep, COUNT(*) AS empleados, ROUND(AVG(salario),2) AS prom_salario FROM empleados WHERE id_dep IS NOT NULL GROUP BY id_dep ORDER BY empleados DESC`,tipo:'select'},
+  {id:'b6-3',nivel:'Intermedio',tag:'HAVING',
+   q:'Lista los departamentos donde el salario promedio supere $40,000. Muestra el id_dep y el promedio.',
+   h1:'HAVING filtra los grupos DESPUÉS del GROUP BY. No puedes usar WHERE con funciones agregadas.',
+   h2:'HAVING AVG(salario) > 40000',
+   sol:`SELECT id_dep, ROUND(AVG(salario),2) AS prom FROM empleados WHERE id_dep IS NOT NULL GROUP BY id_dep HAVING AVG(salario)>40000`,tipo:'select'},
+  {id:'b6-4',nivel:'Intermedio',tag:'SUM + GROUP BY',
+   q:'Muestra el total de horas trabajadas por proyecto. Ordena de mayor a menor. Incluye el id del proyecto.',
+   h1:'Usa SUM(horas) sobre la tabla asignaciones, agrupando por proyecto.',
+   h2:'SELECT id_proy, SUM(horas) FROM asignaciones GROUP BY id_proy',
+   sol:`SELECT id_proy, SUM(horas) AS total_horas FROM asignaciones GROUP BY id_proy ORDER BY total_horas DESC`,tipo:'select'},
+  {id:'b6-5',nivel:'Avanzado',tag:'COALESCE + GROUP BY',
+   q:'Muestra cuántos empleados hay en cada departamento. Para los que tienen id_dep NULL, muestra el texto "Sin departamento". Ordena por cantidad descendente.',
+   h1:'COALESCE(valor, alternativa) devuelve el primer valor no NULL.',
+   h2:'SELECT COALESCE(CAST(id_dep AS TEXT),\'Sin departamento\') ...',
+   sol:`SELECT COALESCE(CAST(id_dep AS TEXT),'Sin departamento') AS departamento, COUNT(*) AS empleados FROM empleados GROUP BY id_dep ORDER BY empleados DESC`,tipo:'select'},
+]},
+
+{id:'b7',num:'BLOQUE 7',title:'Funciones de Texto',color:'#f59e0b',
+ cmds:['UPPER','LOWER','LENGTH','TRIM','SUBSTR','REPLACE','||','INSTR'],
+ tipo:'sql',
+ ejercicios:[
+  {id:'b7-1',nivel:'Básico',tag:'UPPER + LOWER',
+   q:'Muestra el nombre de cada empleado en MAYÚSCULAS y su puesto en minúsculas.',
+   h1:'UPPER(texto) convierte a mayúsculas. LOWER(texto) convierte a minúsculas.',
+   h2:'SELECT UPPER(nombre), LOWER(puesto) FROM empleados',
+   sol:`SELECT UPPER(nombre) AS nombre_upper, LOWER(puesto) AS puesto_lower FROM empleados`,tipo:'select'},
+  {id:'b7-2',nivel:'Básico',tag:'LENGTH',
+   q:'Muestra el nombre de cada empleado y cuántos caracteres tiene su nombre. Ordena por longitud descendente.',
+   h1:'LENGTH(texto) devuelve el número de caracteres.',
+   h2:'SELECT nombre, LENGTH(nombre) AS largo FROM ...',
+   sol:`SELECT nombre, LENGTH(nombre) AS largo FROM empleados ORDER BY largo DESC`,tipo:'select'},
+  {id:'b7-3',nivel:'Intermedio',tag:'SUBSTR',
+   q:'Muestra el nombre de cada empleado y solo sus primeras 3 letras como "inicial".\n\nNota: En SQLite se usa SUBSTR. En PostgreSQL es SUBSTRING(nombre, 1, 3) o LEFT(nombre, 3).',
+   h1:'SUBSTR(texto, inicio, longitud). El índice empieza en 1, no en 0.',
+   h2:'SUBSTR(nombre, 1, 3) devuelve los primeros 3 caracteres.',
+   sol:`SELECT nombre, SUBSTR(nombre,1,3) AS inicial FROM empleados`,tipo:'select',
+   nota:'En PostgreSQL: LEFT(nombre, 3) o SUBSTRING(nombre FROM 1 FOR 3). En SQLite: SUBSTR(nombre, 1, 3).'},
+  {id:'b7-4',nivel:'Intermedio',tag:'|| concat',
+   q:'Crea una columna "etiqueta" que combine: nombre del empleado + " — " + su puesto.\nEjemplo: "Ana Torres — Desarrolladora"',
+   h1:'El operador || concatena textos en SQL. En PostgreSQL también puedes usar CONCAT(a, b).',
+   h2:'nombre || \' — \' || puesto AS etiqueta',
+   sol:`SELECT nombre || ' — ' || puesto AS etiqueta FROM empleados`,tipo:'select'},
+  {id:'b7-5',nivel:'Avanzado',tag:'REPLACE + UPPER',
+   q:'Muestra los puestos únicos de la empresa, pero reemplaza todos los espacios con guiones bajos y ponlos en mayúsculas.\nEjemplo: "DIRECTOR_FINANCIERO"',
+   h1:'Combina REPLACE(texto, buscar, reemplazar) con UPPER().',
+   h2:'UPPER(REPLACE(puesto, \' \', \'_\'))',
+   sol:`SELECT DISTINCT UPPER(REPLACE(puesto,' ','_')) AS puesto_fmt FROM empleados ORDER BY puesto_fmt`,tipo:'select'},
+]},
+
+{id:'b8',num:'BLOQUE 8',title:'Funciones de Fecha',color:'#e879f9',
+ cmds:['date()','strftime()','CURRENT_DATE','julianday()'],
+ tipo:'sql',
+ nota_bloque:'Este bloque usa sintaxis de SQLite. En PostgreSQL: CURRENT_DATE, EXTRACT(), AGE(), TO_CHAR(). Los conceptos son los mismos.',
+ ejercicios:[
+  {id:'b8-1',nivel:'Básico',tag:'Filtrar por fecha',
+   q:'Lista los empleados que ingresaron después del 1 de enero de 2021.',
+   h1:'Las fechas se almacenan como texto en formato YYYY-MM-DD. Puedes compararlas con > igual que números.',
+   h2:'WHERE fecha_ing > \'2021-01-01\'',
+   sol:`SELECT nombre, fecha_ing FROM empleados WHERE fecha_ing > '2021-01-01' ORDER BY fecha_ing`,tipo:'select'},
+  {id:'b8-2',nivel:'Básico',tag:'strftime — año',
+   q:'Muestra el nombre de cada empleado y el año en que ingresó.\n\nEn PostgreSQL usarías: EXTRACT(YEAR FROM fecha_ing)',
+   h1:'En SQLite: strftime(\'%Y\', columna_fecha) extrae el año.',
+   h2:'strftime(\'%Y\', fecha_ing) AS anio',
+   sol:`SELECT nombre, strftime('%Y',fecha_ing) AS anio_ingreso FROM empleados ORDER BY anio_ingreso`,tipo:'select',
+   nota:'PostgreSQL: EXTRACT(YEAR FROM fecha_ing) o DATE_PART(\'year\', fecha_ing)'},
+  {id:'b8-3',nivel:'Intermedio',tag:'Antigüedad en días',
+   q:'Calcula cuántos días lleva trabajando cada empleado hasta hoy. Muestra nombre y días. Ordena de mayor a menor antigüedad.\n\nEn PostgreSQL usarías: CURRENT_DATE - fecha_ing',
+   h1:'En SQLite: julianday(\'now\') - julianday(fecha_ing) calcula la diferencia en días.',
+   h2:'CAST(julianday(\'now\') - julianday(fecha_ing) AS INTEGER) AS dias',
+   sol:`SELECT nombre, CAST(julianday('now')-julianday(fecha_ing) AS INTEGER) AS dias_trabajados FROM empleados WHERE fecha_ing IS NOT NULL ORDER BY dias_trabajados DESC`,tipo:'select',
+   nota:'PostgreSQL: SELECT nombre, CURRENT_DATE - fecha_ing AS dias_trabajados FROM empleados;'},
+  {id:'b8-4',nivel:'Avanzado',tag:'GROUP BY año',
+   q:'¿Cuántos empleados ingresaron por año? Muestra el año y la cantidad. Ordena cronológicamente.',
+   h1:'Combina strftime para extraer el año con GROUP BY.',
+   h2:'GROUP BY strftime(\'%Y\', fecha_ing)',
+   sol:`SELECT strftime('%Y',fecha_ing) AS anio, COUNT(*) AS contrataciones FROM empleados WHERE fecha_ing IS NOT NULL GROUP BY strftime('%Y',fecha_ing) ORDER BY anio`,tipo:'select'},
+]},
+
+{id:'b9',num:'BLOQUE 9',title:'JOINs',color:'#a78bfa',
+ cmds:['INNER JOIN','LEFT JOIN','RIGHT JOIN','FULL OUTER JOIN','SELF JOIN','ON'],
+ tipo:'sql',
+ ejercicios:[
+  {id:'b9-1',nivel:'Básico',tag:'INNER JOIN',
+   q:'Lista el nombre del empleado y el nombre de su departamento. Solo incluye empleados con departamento asignado.',
+   h1:'INNER JOIN conecta tablas por una condición ON. Solo devuelve filas con coincidencia en ambos lados.',
+   h2:'FROM empleados e INNER JOIN departamentos d ON e.id_dep = d.id_dep',
+   sol:`SELECT e.nombre AS empleado, d.nombre AS departamento FROM empleados e INNER JOIN departamentos d ON e.id_dep=d.id_dep`,tipo:'select'},
+  {id:'b9-2',nivel:'Básico',tag:'LEFT JOIN',
+   q:'Lista TODOS los empleados con el nombre de su departamento. Los que no tienen departamento deben aparecer con NULL.',
+   h1:'LEFT JOIN incluye todas las filas de la tabla izquierda (empleados), aunque no haya coincidencia en la derecha.',
+   h2:'FROM empleados e LEFT JOIN departamentos d ON e.id_dep = d.id_dep',
+   sol:`SELECT e.nombre AS empleado, d.nombre AS departamento FROM empleados e LEFT JOIN departamentos d ON e.id_dep=d.id_dep ORDER BY e.nombre`,tipo:'select'},
+  {id:'b9-3',nivel:'Intermedio',tag:'JOIN 3 tablas',
+   q:'Muestra: nombre del empleado, nombre del proyecto y horas trabajadas. Encadena las tres tablas.',
+   h1:'Puedes encadenar JOINs: tabla1 JOIN tabla2 ON ... JOIN tabla3 ON ...',
+   h2:'empleados e JOIN asignaciones a ON e.id_emp=a.id_emp JOIN proyectos p ON a.id_proy=p.id_proy',
+   sol:`SELECT e.nombre AS empleado, p.nombre AS proyecto, a.horas FROM empleados e INNER JOIN asignaciones a ON e.id_emp=a.id_emp INNER JOIN proyectos p ON a.id_proy=p.id_proy ORDER BY e.nombre`,tipo:'select'},
+  {id:'b9-4',nivel:'Intermedio',tag:'JOIN + GROUP BY',
+   q:'Muestra el nombre del departamento y el total acumulado de salarios de sus empleados. Incluye todos los departamentos aunque tengan 0 empleados. Ordena por total descendente.',
+   h1:'Combina JOIN con GROUP BY. Usa LEFT JOIN desde departamentos para incluir los vacíos.',
+   h2:'FROM departamentos d LEFT JOIN empleados e ON d.id_dep=e.id_dep GROUP BY d.id_dep',
+   sol:`SELECT d.nombre AS departamento, COALESCE(SUM(e.salario),0) AS total_salarios FROM departamentos d LEFT JOIN empleados e ON d.id_dep=e.id_dep GROUP BY d.id_dep, d.nombre ORDER BY total_salarios DESC`,tipo:'select'},
+  {id:'b9-5',nivel:'Avanzado',tag:'SELF JOIN',
+   q:'Muestra cada empleado junto con el nombre de su jefe directo (jefe_id → id_emp). Los que no tienen jefe muestren NULL en la columna jefe.',
+   h1:'Un SELF JOIN une la tabla consigo misma. Necesitas dos aliases distintos para la misma tabla.',
+   h2:'FROM empleados e LEFT JOIN empleados j ON e.jefe_id = j.id_emp',
+   sol:`SELECT e.nombre AS empleado, j.nombre AS jefe FROM empleados e LEFT JOIN empleados j ON e.jefe_id=j.id_emp ORDER BY j.nombre NULLS LAST, e.nombre`,tipo:'select'},
+]},
+
+{id:'b10',num:'BLOQUE 10',title:'Subqueries',color:'#f87171',
+ cmds:['IN','NOT IN','EXISTS','NOT EXISTS','ANY','ALL','Subquery correlacionada'],
+ tipo:'sql',
+ ejercicios:[
+  {id:'b10-1',nivel:'Intermedio',tag:'Subquery en WHERE',
+   q:'Encuentra los empleados que ganan más que el promedio general de la empresa.',
+   h1:'Calcula el promedio en una subquery entre paréntesis dentro del WHERE.',
+   h2:'WHERE salario > (SELECT AVG(salario) FROM empleados)',
+   sol:`SELECT nombre, salario FROM empleados WHERE salario>(SELECT AVG(salario) FROM empleados) ORDER BY salario DESC`,tipo:'select'},
+  {id:'b10-2',nivel:'Intermedio',tag:'IN + subquery',
+   q:'Muestra los empleados que están asignados a al menos un proyecto.',
+   h1:'Usa IN con una subquery que devuelva los id_emp que aparecen en asignaciones.',
+   h2:'WHERE id_emp IN (SELECT DISTINCT id_emp FROM asignaciones)',
+   sol:`SELECT nombre, puesto FROM empleados WHERE id_emp IN (SELECT DISTINCT id_emp FROM asignaciones) ORDER BY nombre`,tipo:'select'},
+  {id:'b10-3',nivel:'Intermedio',tag:'NOT IN + subquery',
+   q:'Muestra los empleados que NO participan en ningún proyecto.',
+   h1:'Invierte la lógica del ejercicio anterior usando NOT IN.',
+   h2:'WHERE id_emp NOT IN (SELECT DISTINCT id_emp FROM asignaciones)',
+   sol:`SELECT nombre, puesto FROM empleados WHERE id_emp NOT IN (SELECT DISTINCT id_emp FROM asignaciones) ORDER BY nombre`,tipo:'select'},
+  {id:'b10-4',nivel:'Avanzado',tag:'EXISTS',
+   q:'Lista los proyectos que tienen al menos un empleado asignado. Usa EXISTS.',
+   h1:'EXISTS devuelve TRUE si la subquery devuelve al menos una fila. La subquery referencia la tabla del query exterior.',
+   h2:'WHERE EXISTS (SELECT 1 FROM asignaciones a WHERE a.id_proy = p.id_proy)',
+   sol:`SELECT nombre, estado FROM proyectos p WHERE EXISTS (SELECT 1 FROM asignaciones a WHERE a.id_proy=p.id_proy) ORDER BY nombre`,tipo:'select'},
+  {id:'b10-5',nivel:'Avanzado',tag:'Subquery correlacionada',
+   q:'Lista cada empleado con el número de proyectos en los que participa. Muestra 0 si no tiene ninguno.',
+   h1:'Una subquery correlacionada en el SELECT se ejecuta una vez por cada fila del query exterior.',
+   h2:'SELECT nombre, (SELECT COUNT(*) FROM asignaciones a WHERE a.id_emp=e.id_emp) AS proyectos FROM empleados e',
+   sol:`SELECT nombre, (SELECT COUNT(*) FROM asignaciones a WHERE a.id_emp=e.id_emp) AS num_proyectos FROM empleados e ORDER BY num_proyectos DESC, nombre`,tipo:'select'},
+]},
+
+{id:'b11',num:'BLOQUE 11',title:'DML — Insertar, Modificar, Eliminar',color:'#fb923c',
+ cmds:['INSERT INTO','UPDATE','DELETE','RETURNING','ON CONFLICT'],
+ tipo:'sql',
+ ejercicios:[
+  {id:'b11-1',nivel:'Básico',tag:'INSERT',
+   q:'Agrega un nuevo departamento llamado "Marketing" en la ciudad "Ciudad de México" con id_dep = 5.',
+   h1:'INSERT INTO tabla (col1, col2) VALUES (val1, val2)',
+   h2:'INSERT INTO departamentos (id_dep, nombre, ciudad) VALUES (5, \'Marketing\', \'Ciudad de México\')',
+   sol:`INSERT INTO departamentos (id_dep,nombre,ciudad) VALUES (5,'Marketing','Ciudad de México')`,
+   tipo:'dml',verify:`SELECT id_dep,nombre,ciudad FROM departamentos WHERE id_dep=5`},
+  {id:'b11-2',nivel:'Básico',tag:'INSERT múltiple',
+   q:'Inserta dos nuevos proyectos en una sola operación:\n- id 5, "Portal Web", presupuesto 80000, estado "activo"\n- id 6, "API REST", presupuesto 60000, estado "pausado"',
+   h1:'Puedes insertar múltiples filas separando los VALUES con comas.',
+   h2:'INSERT INTO proyectos VALUES (...), (...)',
+   sol:`INSERT INTO proyectos VALUES (5,'Portal Web',80000,'activo'),(6,'API REST',60000,'pausado')`,
+   tipo:'dml',verify:`SELECT id_proy,nombre,estado FROM proyectos WHERE id_proy IN (5,6) ORDER BY id_proy`},
+  {id:'b11-3',nivel:'Básico',tag:'UPDATE',
+   q:'Roberto Gil (id_emp = 10) fue asignado al departamento de Tecnología (id_dep = 1). Actualiza su registro.',
+   h1:'UPDATE tabla SET columna = valor WHERE condición. ¡El WHERE es crítico! Sin él modificas TODOS los registros.',
+   h2:'UPDATE empleados SET id_dep = 1 WHERE id_emp = 10',
+   sol:`UPDATE empleados SET id_dep=1 WHERE id_emp=10`,
+   tipo:'dml',verify:`SELECT id_emp,nombre,id_dep FROM empleados WHERE id_emp=10`},
+  {id:'b11-4',nivel:'Intermedio',tag:'UPDATE con cálculo',
+   q:'Aplica un aumento del 15% a todos los empleados del departamento de Tecnología (id_dep = 1).',
+   h1:'En el SET puedes usar el valor actual de la columna: SET salario = salario * 1.15',
+   h2:'UPDATE empleados SET salario = salario * 1.15 WHERE id_dep = 1',
+   sol:`UPDATE empleados SET salario=salario*1.15 WHERE id_dep=1`,
+   tipo:'dml',verify:`SELECT nombre, ROUND(salario,2) AS salario FROM empleados WHERE id_dep=1 ORDER BY id_emp`},
+  {id:'b11-5',nivel:'Intermedio',tag:'DELETE con integridad',
+   q:'Elimina a Elena Soto (id_emp = 9) de la empresa.\nRecuerda: primero debes eliminar sus registros en asignaciones.',
+   h1:'Por integridad referencial, no puedes borrar un registro que otros registros referencian. Elimina primero los dependientes.',
+   h2:'DELETE FROM asignaciones WHERE id_emp=9; DELETE FROM empleados WHERE id_emp=9;',
+   sol:`DELETE FROM asignaciones WHERE id_emp=9; DELETE FROM empleados WHERE id_emp=9;`,
+   tipo:'dml',verify:`SELECT COUNT(*) AS quedaron FROM empleados WHERE id_emp=9`},
+]},
+
+{id:'b12',num:'BLOQUE 12',title:'Transacciones',color:'#38bdf8',
+ cmds:['BEGIN','COMMIT','ROLLBACK','SAVEPOINT','RELEASE SAVEPOINT'],
+ tipo:'teoria',
+ ejercicios:[
+  {id:'b12-1',nivel:'Básico',tag:'BEGIN / COMMIT',
+   q:'¿Cuál es la secuencia correcta para ejecutar una serie de operaciones SQL y guardar los cambios permanentemente?',
+   opts:['COMMIT → operaciones → BEGIN','BEGIN → operaciones → COMMIT','START → operaciones → SAVE','operaciones → COMMIT → BEGIN'],ans:1,
+   expl:'<strong>BEGIN</strong> inicia la transacción. <strong>COMMIT</strong> confirma y guarda todos los cambios. Sin COMMIT, los cambios no se persisten (se pierden si el sistema falla).'},
+  {id:'b12-2',nivel:'Básico',tag:'ROLLBACK',
+   q:'Iniciaste una transacción con BEGIN, ejecutaste 3 DELETE y te diste cuenta de que borraste datos incorrectos. ¿Qué haces?',
+   opts:['COMMIT para guardar y corregir después','UNDO','ROLLBACK','EXIT sin confirmar'],ans:2,
+   expl:'<strong>ROLLBACK</strong> deshace TODOS los cambios desde el último BEGIN. Es tu botón de "deshacer" para transacciones. Por eso siempre debes usar transacciones al hacer operaciones críticas.'},
+  {id:'b12-3',nivel:'Intermedio',tag:'SAVEPOINT',
+   q:'¿Para qué sirve SAVEPOINT dentro de una transacción?',
+   opts:['Para guardar la BD en disco temporalmente','Para crear un punto de restauración parcial dentro de la transacción','Para pausar la transacción','Para confirmar cambios hasta ese punto'],ans:1,
+   expl:'<strong>SAVEPOINT nombre</strong> crea un marcador dentro de la transacción. Con <strong>ROLLBACK TO nombre</strong> puedes deshacer solo hasta ese punto sin cancelar toda la transacción. Útil en operaciones complejas de múltiples pasos.'},
+  {id:'b12-4',nivel:'Intermedio',tag:'ACID',
+   q:'¿Qué propiedad ACID garantiza que si el sistema falla en medio de una transacción, la BD no queda en un estado parcial?',
+   opts:['Consistency (Consistencia)','Isolation (Aislamiento)','Atomicity (Atomicidad)','Durability (Durabilidad)'],ans:2,
+   expl:'<strong>Atomicity (Atomicidad)</strong>: una transacción es "todo o nada". O se ejecutan TODAS las operaciones o ninguna. Si falla a la mitad, PostgreSQL hace ROLLBACK automático.'},
+  {id:'b12-5',nivel:'Avanzado',tag:'Isolation',
+   q:'Dos transacciones corren simultáneamente. La transacción A lee un saldo de $1000. La transacción B lo modifica a $500 antes de que A termine. A sigue viendo $1000. ¿Qué concepto describe esto?',
+   opts:['Dirty Read','Phantom Read','Snapshot Isolation / Read Committed','Deadlock'],ans:2,
+   expl:'<strong>Snapshot Isolation</strong>: cada transacción ve una "foto" de los datos al momento en que inició. Es el comportamiento por defecto en PostgreSQL (Read Committed). Evita que una transacción vea cambios no confirmados de otra.'},
+]},
+
+{id:'b14',num:'BLOQUE 14',title:'Vistas',color:'#2dd4bf',
+ cmds:['CREATE VIEW','CREATE OR REPLACE VIEW','DROP VIEW','CREATE MATERIALIZED VIEW'],
+ tipo:'sql',
+ ejercicios:[
+  {id:'b14-1',nivel:'Básico',tag:'CREATE VIEW',
+   q:'Crea una vista llamada "vista_emp_dep" que muestre: nombre del empleado, su puesto y el nombre de su departamento.',
+   h1:'CREATE VIEW nombre AS SELECT ... — La vista es una query guardada que se usa como si fuera una tabla.',
+   h2:'CREATE VIEW vista_emp_dep AS SELECT e.nombre, e.puesto, d.nombre ... FROM empleados e JOIN departamentos d ...',
+   sol:`CREATE VIEW vista_emp_dep AS SELECT e.nombre AS empleado, e.puesto, d.nombre AS departamento FROM empleados e LEFT JOIN departamentos d ON e.id_dep=d.id_dep`,
+   tipo:'ddl',verify:`SELECT name FROM sqlite_master WHERE type='view' AND name='vista_emp_dep'`},
+  {id:'b14-2',nivel:'Básico',tag:'Consultar una vista',
+   q:'La vista "vista_emp_dep" ya existe. Consulta todos sus registros ordenados por departamento.',
+   h1:'Una vista se consulta exactamente igual que una tabla con SELECT.',
+   h2:'SELECT * FROM vista_emp_dep ORDER BY departamento',
+   sol:`SELECT * FROM vista_emp_dep ORDER BY departamento`,tipo:'select'},
+  {id:'b14-3',nivel:'Intermedio',tag:'Vista con agregados',
+   q:'Crea una vista llamada "vista_resumen_dep" que muestre por departamento:\n- Nombre del departamento\n- Número de empleados\n- Salario promedio redondeado a 2 decimales',
+   h1:'Las vistas pueden contener cualquier query válida, incluyendo GROUP BY y funciones agregadas.',
+   h2:'CREATE VIEW vista_resumen_dep AS SELECT d.nombre, COUNT(e.id_emp), ROUND(AVG(e.salario),2) FROM ...',
+   sol:`CREATE VIEW vista_resumen_dep AS SELECT d.nombre AS departamento, COUNT(e.id_emp) AS empleados, ROUND(AVG(e.salario),2) AS prom_salario FROM departamentos d LEFT JOIN empleados e ON d.id_dep=e.id_dep GROUP BY d.id_dep, d.nombre`,
+   tipo:'ddl',verify:`SELECT name FROM sqlite_master WHERE type='view' AND name='vista_resumen_dep'`},
+  {id:'b14-4',nivel:'Avanzado',tag:'DROP VIEW + CREATE OR REPLACE',
+   q:'La vista "vista_emp_dep" necesita actualizarse para incluir también el salario. Usa CREATE OR REPLACE para modificarla sin borrarla primero.\n\nNota: SQLite no soporta CREATE OR REPLACE VIEW — usa DROP + CREATE.',
+   h1:'En PostgreSQL: CREATE OR REPLACE VIEW nombre AS SELECT nueva_query. En SQLite: DROP VIEW IF EXISTS + CREATE VIEW.',
+   h2:'DROP VIEW IF EXISTS vista_emp_dep; CREATE VIEW vista_emp_dep AS SELECT ... salario ...',
+   sol:`DROP VIEW IF EXISTS vista_emp_dep; CREATE VIEW vista_emp_dep AS SELECT e.nombre AS empleado, e.puesto, e.salario, d.nombre AS departamento FROM empleados e LEFT JOIN departamentos d ON e.id_dep=d.id_dep`,
+   tipo:'ddl',verify:`SELECT name FROM sqlite_master WHERE type='view' AND name='vista_emp_dep'`,
+   nota:'En PostgreSQL: CREATE OR REPLACE VIEW vista_emp_dep AS SELECT ... (sin necesidad de DROP)'},
+]},
+
+{id:'b15',num:'BLOQUE 15',title:'Usuarios y Permisos',color:'#fb7185',
+ cmds:['CREATE USER','CREATE ROLE','GRANT','REVOKE','ALTER USER'],
+ tipo:'teoria',
+ ejercicios:[
+  {id:'b15-1',nivel:'Básico',tag:'CREATE USER',
+   q:'¿Cuál es la sintaxis correcta para crear un usuario "admin_bd" con contraseña "Clave123!" en PostgreSQL?',
+   opts:["ADD USER admin_bd PASSWORD 'Clave123!';","CREATE USER admin_bd WITH PASSWORD 'Clave123!';","NEW USER admin_bd IDENTIFIED BY 'Clave123!';","INSERT INTO users (name,pass) VALUES ('admin_bd','Clave123!');"],ans:1,
+   expl:'<strong>CREATE USER nombre WITH PASSWORD \'contraseña\'</strong> es la sintaxis estándar de PostgreSQL. WITH PASSWORD es opcional en la sintaxis pero recomendable siempre por seguridad.'},
+  {id:'b15-2',nivel:'Básico',tag:'GRANT',
+   q:'Quieres que el usuario "reporte_usr" pueda leer la tabla "ventas" pero no modificarla. ¿Cuál es el comando correcto?',
+   opts:["GRANT ALL ON ventas TO reporte_usr;","ALLOW SELECT ON ventas TO reporte_usr;","GRANT SELECT ON ventas TO reporte_usr;","PERMIT READ ON ventas FOR reporte_usr;"],ans:2,
+   expl:'<strong>GRANT SELECT ON tabla TO usuario</strong>. Especificar solo SELECT garantiza que el usuario pueda leer pero no INSERT, UPDATE ni DELETE. Este es el principio de mínimo privilegio.'},
+  {id:'b15-3',nivel:'Intermedio',tag:'REVOKE',
+   q:'El usuario "reporte_usr" ya no necesita acceso a la tabla "ventas". ¿Cómo le quitas el permiso?',
+   opts:["DELETE GRANT SELECT ON ventas FROM reporte_usr;","REVOKE SELECT ON ventas FROM reporte_usr;","REMOVE SELECT ON ventas FROM reporte_usr;","GRANT NO SELECT ON ventas TO reporte_usr;"],ans:1,
+   expl:'<strong>REVOKE permiso ON objeto FROM usuario</strong> es el inverso exacto de GRANT. La sintaxis es casi idéntica, solo cambia GRANT→REVOKE y TO→FROM.'},
+  {id:'b15-4',nivel:'Intermedio',tag:'CREATE ROLE',
+   q:'¿Cuál es la diferencia principal entre CREATE USER y CREATE ROLE en PostgreSQL?',
+   opts:['No hay diferencia, son sinónimos exactos','CREATE ROLE tiene LOGIN desactivado por defecto; CREATE USER lo tiene activado','CREATE USER solo sirve para acceso de lectura','CREATE ROLE no puede tener contraseña'],ans:1,
+   expl:'<strong>CREATE ROLE</strong> crea un rol sin capacidad de login por defecto. <strong>CREATE USER</strong> es equivalente a CREATE ROLE ... WITH LOGIN. Los roles sin login sirven como "contenedores de permisos" que se asignan a usuarios.'},
+  {id:'b15-5',nivel:'Avanzado',tag:'Mínimo privilegio',
+   q:'Una app de facturación solo necesita leer clientes e insertar facturas, nunca borrar ni modificar nada. ¿Cuál es la configuración más segura?',
+   opts:['GRANT ALL PRIVILEGES ON ALL TABLES TO app_facturacion','GRANT SELECT ON clientes TO app_facturacion; GRANT INSERT ON facturas TO app_facturacion','Crear un usuario administrador y usarlo para la app','GRANT SELECT, INSERT, UPDATE, DELETE ON clientes, facturas TO app_facturacion'],ans:1,
+   expl:'<strong>Principio de mínimo privilegio</strong>: otorgar exactamente los permisos necesarios y nada más. Si la app solo lee clientes → solo SELECT en clientes. Si solo inserta facturas → solo INSERT en facturas. Esto limita el daño en caso de compromiso (incluyendo SQLi).'},
+]},
+
+{id:'b17',num:'BLOQUE 17',title:'CTEs',color:'#a3e635',
+ cmds:['WITH','AS','UNION ALL','WITH RECURSIVE'],
+ tipo:'sql',
+ ejercicios:[
+  {id:'b17-1',nivel:'Intermedio',tag:'CTE básica',
+   q:'Usando una CTE llamada "empleados_tech", filtra primero los empleados del departamento 1, luego selecciona de esa CTE solo los que ganan más de $40,000.',
+   h1:'WITH nombre AS (query) SELECT * FROM nombre WHERE ...  — La CTE es una tabla temporal con nombre.',
+   h2:'WITH empleados_tech AS (SELECT * FROM empleados WHERE id_dep=1) SELECT * FROM empleados_tech WHERE ...',
+   sol:`WITH empleados_tech AS (SELECT * FROM empleados WHERE id_dep=1) SELECT nombre, salario FROM empleados_tech WHERE salario>40000 ORDER BY salario DESC`,tipo:'select'},
+  {id:'b17-2',nivel:'Intermedio',tag:'CTE con agregado',
+   q:'Crea una CTE "resumen" que calcule el salario promedio por departamento. Luego, desde el query principal, filtra solo los departamentos con promedio mayor a $38,000.',
+   h1:'Puedes usar GROUP BY y funciones agregadas dentro de una CTE.',
+   h2:'WITH resumen AS (SELECT id_dep, AVG(salario) AS prom FROM empleados GROUP BY id_dep) SELECT * FROM resumen WHERE prom > 38000',
+   sol:`WITH resumen AS (SELECT id_dep, ROUND(AVG(salario),2) AS prom FROM empleados WHERE id_dep IS NOT NULL GROUP BY id_dep) SELECT id_dep, prom FROM resumen WHERE prom>38000 ORDER BY prom DESC`,tipo:'select'},
+  {id:'b17-3',nivel:'Avanzado',tag:'CTEs múltiples',
+   q:'Crea dos CTEs:\n1. "top_empleados": los 3 empleados con mayor salario\n2. "sus_proyectos": los proyectos de esos empleados (vía asignaciones)\nMuestra el nombre del empleado y nombre del proyecto.',
+   h1:'Puedes encadenar múltiples CTEs separándolas con comas: WITH cte1 AS (...), cte2 AS (...) SELECT ...',
+   h2:'WITH top_empleados AS (...), sus_proyectos AS (...) SELECT ...',
+   sol:`WITH top_emp AS (SELECT id_emp, nombre FROM empleados ORDER BY salario DESC LIMIT 3), sus_proy AS (SELECT t.nombre AS empleado, p.nombre AS proyecto FROM top_emp t JOIN asignaciones a ON t.id_emp=a.id_emp JOIN proyectos p ON a.id_proy=p.id_proy) SELECT * FROM sus_proy ORDER BY empleado`,tipo:'select'},
+  {id:'b17-4',nivel:'Avanzado',tag:'WITH RECURSIVE',
+   q:'Usando CTE recursiva, recorre la jerarquía de empleados partiendo de los que NO tienen jefe (jefe_id IS NULL). Muestra nombre y nivel jerárquico (nivel 1 = sin jefe, nivel 2 = reportan a nivel 1, etc.).',
+   h1:'WITH RECURSIVE nombre AS (query_base UNION ALL query_recursiva) — La query base es el caso inicial. La recursiva se une usando la CTE misma.',
+   h2:'WITH RECURSIVE jerarquia AS (SELECT id_emp, nombre, 1 AS nivel FROM empleados WHERE jefe_id IS NULL UNION ALL SELECT e.id_emp, e.nombre, j.nivel+1 FROM empleados e JOIN jerarquia j ON e.jefe_id=j.id_emp)',
+   sol:`WITH RECURSIVE jerarquia AS (SELECT id_emp, nombre, 1 AS nivel FROM empleados WHERE jefe_id IS NULL UNION ALL SELECT e.id_emp, e.nombre, j.nivel+1 FROM empleados e INNER JOIN jerarquia j ON e.jefe_id=j.id_emp) SELECT nombre, nivel FROM jerarquia ORDER BY nivel, nombre`,tipo:'select'},
+]},
+];
+
+// ─────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────
+let db = null;
+let dbReady = false;
+let curBlock = 0;
+let viewSchema = false;
+const attempts  = JSON.parse(localStorage.getItem('sqlt_att')  || '{}');
+const completed = JSON.parse(localStorage.getItem('sqlt_done') || '{}');
+const solShown  = JSON.parse(localStorage.getItem('sqlt_sol')  || '{}');
+const expected  = {};
+const MAX_ATT = 5;
+
+function saveState(){
+  localStorage.setItem('sqlt_att',  JSON.stringify(attempts));
+  localStorage.setItem('sqlt_done', JSON.stringify(completed));
+  localStorage.setItem('sqlt_sol',  JSON.stringify(solShown));
+}
+
+// ─────────────────────────────────────────
+// DB
+// ─────────────────────────────────────────
+function resetDB(){
+  ['DROP VIEW IF EXISTS vista_emp_dep',
+   'DROP VIEW IF EXISTS vista_resumen_dep',
+   'DROP TABLE IF EXISTS asignaciones',
+   'DROP TABLE IF EXISTS pagos',
+   'DROP TABLE IF EXISTS tickets',
+   'DROP TABLE IF EXISTS clientes',
+   'DROP TABLE IF EXISTS empleados',
+   'DROP TABLE IF EXISTS proyectos',
+   'DROP TABLE IF EXISTS departamentos'
+  ].forEach(s=>{ try{db.run(s)}catch(e){} });
+  db.run(BASE_SCHEMA);
+}
+
+function precompute(){
+  BLOCKS.forEach(blk=>{
+    if(blk.tipo!=='sql') return;
+    blk.ejercicios.forEach(ej=>{
+      try{
+        resetDB();
+        if(ej.tipo==='select'){
+          expected[ej.id] = db.exec(ej.sol);
+        } else {
+          const stmts = ej.sol.split(';').map(s=>s.trim()).filter(Boolean);
+          stmts.forEach(s=>db.run(s));
+          expected[ej.id] = db.exec(ej.verify);
+        }
+      }catch(e){ console.warn('precompute',ej.id,e.message); }
+    });
+  });
+  resetDB();
+}
+
+function normalizeResult(r){
+  if(!r||!r.length) return '[]';
+  return JSON.stringify(
+    r[0].values.map(row=>row.map(v=>v===null?'NULL':String(v))).sort((a,b)=>a.join('|').localeCompare(b.join('|')))
+  );
+}
+
+// ─────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────
+async function init(){
+  const SQL = await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/${f}`});
+  db = new SQL.Database();
+  resetDB();
+  precompute();
+  dbReady = true;
+  document.getElementById('loading').classList.add('hidden');
+  document.getElementById('dbbadge').textContent='DB: lista';
+  document.getElementById('dbbadge').classList.add('ok');
+  renderAll();
+}
+
+// ─────────────────────────────────────────
+// PROGRESS
+// ─────────────────────────────────────────
+function totalExs(){ return BLOCKS.reduce((a,b)=>a+b.ejercicios.length,0); }
+function totalDone(){ return Object.values(completed).filter(Boolean).length; }
+function blockDone(blk){ return blk.ejercicios.filter(e=>completed[e.id]).length; }
+
+function updateProgress(){
+  const tot=totalExs(), done=totalDone();
+  const pct=tot?Math.round(done/tot*100):0;
+  document.getElementById('pct').textContent=pct+'%';
+  document.getElementById('det').textContent=done+' / '+tot;
+  document.getElementById('pbar').style.width=pct+'%';
+}
+
+// ─────────────────────────────────────────
+// SIDEBAR
+// ─────────────────────────────────────────
+function renderSidebar(){
+  const sb=document.getElementById('sidebar');
+  let h='';
+  BLOCKS.forEach((blk,i)=>{
+    const done=blockDone(blk), tot=blk.ejercicios.length;
+    const pct=tot?done/tot*100:0;
+    const active=!viewSchema&&i===curBlock;
+    h+=`<div class="nav-item${active?' active':''}" style="--nc:${blk.color}" onclick="setBlock(${i})">
+      <div class="ni-num">${blk.num}</div>
+      <div class="ni-title">${blk.title}</div>
+      <div class="ni-cmds">${blk.cmds.slice(0,5).map(c=>`<span class="ni-cmd">${c}</span>`).join('')}${blk.cmds.length>5?`<span class="ni-cmd">+${blk.cmds.length-5}</span>`:''}</div>
+      <div class="ni-prog">
+        <div class="ni-bar"><div class="ni-bar-fill" style="width:${pct}%"></div></div>
+        <span class="ni-txt">${done}/${tot}</span>
+      </div>
+    </div>`;
+    if(i===BLOCKS.length-1){
+      h+=`<div class="nav-divider"></div>
+      <div class="nav-item${viewSchema?' active':''}${viewSchema?'':''}" style="--nc:#60a5fa" onclick="setSchema()">
+        <div class="ni-num" style="color:#60a5fa">REFERENCIA</div>
+        <div class="ni-title">Schema SQL</div>
+        <div class="ni-cmds"><span class="ni-cmd">tablas</span><span class="ni-cmd">datos</span></div>
+      </div>`;
+    }
+  });
+  sb.innerHTML=h;
+}
+
+// ─────────────────────────────────────────
+// BLOCK REFERENCES
+// ─────────────────────────────────────────
+const BLOCK_REFS = {
+'b0':[
+  {cmd:'\\l',desc:'Lista todas las bases de datos disponibles.',syn:'\\l',ex:'\\l\n-- Muestra: nombre, dueño, codificación, tamaño'},
+  {cmd:'\\c nombre',desc:'Conectarse (cambiar) a una base de datos específica.',syn:'\\c nombre_bd',ex:'\\c practica_sql\n-- "You are now connected to database practica_sql"'},
+  {cmd:'\\dt',desc:'Lista todas las tablas del esquema actual.',syn:'\\dt',ex:'\\dt\n-- Lista: Schema | Name | Type | Owner'},
+  {cmd:'\\d tabla',desc:'Describe la estructura completa de una tabla: columnas, tipos, constraints, índices.',syn:'\\d nombre_tabla',ex:'\\d empleados\n-- Muestra columnas, tipos, NOT NULL, FK, índices'},
+  {cmd:'\\du',desc:'Lista todos los usuarios y roles con sus atributos.',syn:'\\du',ex:'\\du\n-- Muestra: Role name | Attributes | Member of'},
+  {cmd:'\\dp tabla',desc:'Muestra los permisos (ACL) de una tabla. Útil para auditoría de seguridad.',syn:'\\dp nombre_tabla',ex:'\\dp empleados\n-- Muestra: grantee | privileges'},
+  {cmd:'\\i archivo',desc:'Ejecuta un archivo SQL externo desde psql sin salir.',syn:'\\i ruta/archivo.sql',ex:'\\i /home/fer/schema.sql\n-- Ejecuta todas las queries del archivo'},
+  {cmd:'\\h COMANDO',desc:'Muestra la ayuda y sintaxis de un comando SQL específico.',syn:'\\h SELECT\n\\h CREATE TABLE',ex:'\\h JOIN\n-- Muestra la sintaxis completa de JOIN'},
+  {cmd:'\\q',desc:'Sale de psql y regresa al terminal del sistema.',syn:'\\q',ex:'\\q\n-- Equivalente a Ctrl+D'},
+],
+'b2':[
+  {cmd:'CREATE TABLE',desc:'Crea una tabla nueva con sus columnas y restricciones.',
+   syn:'CREATE TABLE nombre (\n  col tipo constraint,\n  col tipo constraint\n);',
+   ex:'CREATE TABLE clientes (\n  id     INTEGER PRIMARY KEY,\n  nombre TEXT NOT NULL,\n  email  TEXT UNIQUE\n);'},
+  {cmd:'PRIMARY KEY',desc:'Identifica de forma única cada fila. No puede ser NULL ni duplicarse.',
+   syn:'col tipo PRIMARY KEY',ex:'id INTEGER PRIMARY KEY\n-- En PostgreSQL: id SERIAL PRIMARY KEY (autoincremento)'},
+  {cmd:'NOT NULL',desc:'La columna no puede quedar vacía. Obliga a siempre insertar un valor.',
+   syn:'col tipo NOT NULL',ex:'nombre TEXT NOT NULL\n-- Error si intentas insertar sin este campo'},
+  {cmd:'UNIQUE',desc:'No pueden existir dos filas con el mismo valor en esta columna.',
+   syn:'col tipo UNIQUE',ex:'email TEXT UNIQUE\n-- Permite NULLs múltiples (solo los valores no-NULL son únicos)'},
+  {cmd:'DEFAULT',desc:'Valor automático cuando no se especifica uno al insertar.',
+   syn:'col tipo DEFAULT valor',ex:'saldo REAL DEFAULT 0\nfecha TEXT DEFAULT CURRENT_DATE'},
+  {cmd:'CHECK',desc:'Valida que el valor cumpla una condición lógica al insertar o actualizar.',
+   syn:'col tipo CHECK(condición)',ex:"estado TEXT CHECK(estado IN ('activo','cerrado'))\nedge INTEGER CHECK(edge > 0)"},
+  {cmd:'FOREIGN KEY / REFERENCES',desc:'Llave foránea: vincula una columna con la clave primaria de otra tabla.',
+   syn:'col tipo REFERENCES tabla(col)',ex:'id_dep INTEGER REFERENCES departamentos(id_dep)\n-- Error si insertas un id_dep que no existe en departamentos'},
+  {cmd:'ALTER TABLE',desc:'Modifica la estructura de una tabla existente sin recrearla.',
+   syn:'ALTER TABLE tabla ADD COLUMN col tipo;\nALTER TABLE tabla DROP COLUMN col;\nALTER TABLE tabla RENAME COLUMN viejo TO nuevo;',
+   ex:'ALTER TABLE empleados ADD COLUMN telefono TEXT;\nALTER TABLE empleados RENAME COLUMN puesto TO cargo;'},
+  {cmd:'DROP TABLE',desc:'Elimina una tabla permanentemente junto con todos sus datos.',
+   syn:'DROP TABLE nombre;\nDROP TABLE IF EXISTS nombre;',
+   ex:'DROP TABLE IF EXISTS temp_datos;\n-- IF EXISTS evita error si la tabla no existe'},
+],
+'b5':[
+  {cmd:'SELECT',desc:'Recupera datos de una o más tablas. Es el comando más usado en SQL.',
+   syn:'SELECT col1, col2 FROM tabla;\nSELECT * FROM tabla;',
+   ex:'SELECT nombre, salario FROM empleados;\nSELECT * FROM departamentos;'},
+  {cmd:'WHERE',desc:'Filtra filas que cumplen una condición. Va después del FROM.',
+   syn:'SELECT ... FROM tabla WHERE condición;',
+   ex:'SELECT * FROM empleados WHERE salario > 40000;\nSELECT * FROM empleados WHERE id_dep = 1 AND salario > 35000;'},
+  {cmd:'ORDER BY',desc:'Ordena el resultado. ASC = ascendente (default). DESC = descendente.',
+   syn:'SELECT ... ORDER BY col ASC;\nSELECT ... ORDER BY col DESC;',
+   ex:'SELECT nombre, salario FROM empleados ORDER BY salario DESC;\nORDER BY apellido ASC, nombre ASC;  -- orden múltiple'},
+  {cmd:'LIMIT / OFFSET',desc:'LIMIT limita cuántas filas devuelve. OFFSET salta N filas (para paginación).',
+   syn:'SELECT ... LIMIT n;\nSELECT ... LIMIT n OFFSET m;',
+   ex:'SELECT * FROM empleados LIMIT 5;        -- primeras 5 filas\nSELECT * FROM empleados LIMIT 5 OFFSET 10; -- filas 11-15'},
+  {cmd:'DISTINCT',desc:'Elimina filas duplicadas del resultado.',
+   syn:'SELECT DISTINCT col FROM tabla;',
+   ex:'SELECT DISTINCT puesto FROM empleados;\n-- Si hay 3 "Desarrolladores", solo aparece 1'},
+  {cmd:'BETWEEN',desc:'Filtra valores en un rango inclusivo (incluye ambos extremos).',
+   syn:'WHERE col BETWEEN a AND b',
+   ex:'WHERE salario BETWEEN 30000 AND 50000\n-- Equivale a: WHERE salario >= 30000 AND salario <= 50000'},
+  {cmd:'IN / NOT IN',desc:'Filtra si el valor está (o no está) en una lista de valores.',
+   syn:'WHERE col IN (v1, v2, v3)\nWHERE col NOT IN (v1, v2)',
+   ex:"WHERE id_dep IN (1, 3)        -- dep 1 o 3\nWHERE puesto NOT IN ('Vendedor','Analista')"},
+  {cmd:'LIKE / ILIKE',desc:'Búsqueda de patrones en texto. % = cualquier cadena. _ = un carácter. ILIKE ignora mayúsculas (solo PostgreSQL).',
+   syn:"WHERE col LIKE 'patrón'\nWHERE col ILIKE 'patrón'",
+   ex:"WHERE nombre LIKE 'A%'     -- empieza con A\nWHERE email LIKE '%@gmail.com' -- termina en @gmail.com\nWHERE nombre LIKE '_a%'   -- segunda letra es 'a'"},
+  {cmd:'IS NULL / IS NOT NULL',desc:'Verifica si un valor es nulo. Nunca uses = NULL, siempre IS NULL.',
+   syn:'WHERE col IS NULL\nWHERE col IS NOT NULL',
+   ex:'WHERE id_dep IS NULL      -- sin departamento\nWHERE fecha_ing IS NOT NULL -- que tengan fecha'},
+  {cmd:'CASE WHEN',desc:'Condicional dentro de una query. Equivale a un if-else en programación.',
+   syn:"CASE\n  WHEN cond1 THEN valor1\n  WHEN cond2 THEN valor2\n  ELSE valor_default\nEND AS alias",
+   ex:"SELECT nombre,\n  CASE\n    WHEN salario > 50000 THEN 'Alto'\n    WHEN salario > 30000 THEN 'Medio'\n    ELSE 'Bajo'\n  END AS nivel\nFROM empleados;"},
+],
+'b6':[
+  {cmd:'COUNT',desc:'Cuenta filas. COUNT(*) cuenta todas. COUNT(col) excluye NULLs.',
+   syn:'SELECT COUNT(*) FROM tabla;\nSELECT COUNT(col) FROM tabla;',
+   ex:'SELECT COUNT(*) FROM empleados;        -- total de filas\nSELECT COUNT(id_dep) FROM empleados;   -- excluye NULLs en id_dep'},
+  {cmd:'SUM',desc:'Suma los valores numéricos de una columna.',
+   syn:'SELECT SUM(col) FROM tabla;',
+   ex:'SELECT SUM(salario) FROM empleados;\nSELECT SUM(horas) FROM asignaciones WHERE id_proy = 1;'},
+  {cmd:'AVG',desc:'Calcula el promedio. Ignora automáticamente los valores NULL.',
+   syn:'SELECT AVG(col) FROM tabla;',
+   ex:'SELECT AVG(salario) FROM empleados;\n-- Combina con ROUND: ROUND(AVG(salario), 2)'},
+  {cmd:'MAX / MIN',desc:'Devuelve el valor máximo o mínimo de una columna.',
+   syn:'SELECT MAX(col) FROM tabla;\nSELECT MIN(col) FROM tabla;',
+   ex:'SELECT MAX(salario), MIN(salario) FROM empleados;\nSELECT MAX(fecha_ing) FROM empleados; -- contratación más reciente'},
+  {cmd:'GROUP BY',desc:'Agrupa filas con el mismo valor. Las funciones agregadas operan por grupo.',
+   syn:'SELECT col, AGG(col2)\nFROM tabla\nGROUP BY col;',
+   ex:'SELECT id_dep, COUNT(*), AVG(salario)\nFROM empleados\nGROUP BY id_dep;\n-- Un resultado por cada id_dep único'},
+  {cmd:'HAVING',desc:'Filtra grupos después del GROUP BY. Es como WHERE pero para resultados agregados.',
+   syn:'SELECT col, AGG(col2)\nFROM tabla\nGROUP BY col\nHAVING AGG(col2) > valor;',
+   ex:'SELECT id_dep, AVG(salario)\nFROM empleados\nGROUP BY id_dep\nHAVING AVG(salario) > 40000;',
+   note:'⚠️ No puedes usar WHERE con funciones agregadas. WHERE filtra filas, HAVING filtra grupos.'},
+  {cmd:'ROUND',desc:'Redondea un número a N decimales.',
+   syn:'ROUND(número, decimales)',
+   ex:'SELECT ROUND(AVG(salario), 2) FROM empleados;\nROUND(3.14159, 2) → 3.14'},
+  {cmd:'COALESCE',desc:'Devuelve el primer valor no NULL de la lista. Útil para reemplazar NULLs.',
+   syn:'COALESCE(val1, val2, fallback)',
+   ex:"SELECT COALESCE(id_dep, 0) FROM empleados;\n-- Si id_dep es NULL, devuelve 0\nCOALESCE(nombre, 'Sin nombre')"},
+],
+'b7':[
+  {cmd:'UPPER / LOWER',desc:'Convierte texto a mayúsculas o minúsculas.',
+   syn:'UPPER(texto)\nLOWER(texto)',
+   ex:"SELECT UPPER('hola');   -- 'HOLA'\nSELECT LOWER('SQL');    -- 'sql'"},
+  {cmd:'LENGTH',desc:'Devuelve el número de caracteres de un texto.',
+   syn:'LENGTH(texto)',
+   ex:"SELECT LENGTH('Hola');  -- 4\nSELECT nombre, LENGTH(nombre) FROM empleados;"},
+  {cmd:'TRIM / LTRIM / RTRIM',desc:'Elimina espacios (u otros caracteres) del inicio y/o final de un texto.',
+   syn:'TRIM(texto)\nLTRIM(texto)\nRTRIM(texto)',
+   ex:"TRIM('  hola  ')   -- 'hola'\nLTRIM('  hola  ')  -- 'hola  '\nRTRIM('  hola  ')  -- '  hola'"},
+  {cmd:'SUBSTR / SUBSTRING',desc:'Extrae una porción de texto. En SQLite: SUBSTR. En PostgreSQL: SUBSTRING o LEFT/RIGHT.',
+   syn:'SUBSTR(texto, inicio, longitud)    -- SQLite\nSUBSTRING(texto, inicio, longitud) -- PostgreSQL\nLEFT(texto, n) / RIGHT(texto, n)   -- PostgreSQL',
+   ex:"SUBSTR('Fernando', 1, 3)  -- 'Fer'\nLEFT('Fernando', 3)       -- 'Fer'  (PostgreSQL)\nRIGHT('Fernando', 3)      -- 'ndo'  (PostgreSQL)",
+   note:'Esta app usa SQLite → SUBSTR. En PostgreSQL usa LEFT(), RIGHT() o SUBSTRING().'},
+  {cmd:'REPLACE',desc:'Reemplaza todas las ocurrencias de una subcadena por otra.',
+   syn:'REPLACE(texto, buscar, reemplazar)',
+   ex:"REPLACE('Hola Mundo', 'Mundo', 'SQL')  -- 'Hola SQL'\nREPLACE(puesto, ' ', '_')  -- reemplaza espacios"},
+  {cmd:'|| (concatenar)',desc:'Une dos o más cadenas de texto. En PostgreSQL también existe CONCAT().',
+   syn:"texto1 || texto2\nCONCAT(texto1, texto2)  -- PostgreSQL",
+   ex:"'Hola' || ' ' || 'Mundo'  -- 'Hola Mundo'\nnombre || ' — ' || puesto  -- 'Ana Torres — Desarrolladora'"},
+  {cmd:'INSTR / POSITION',desc:'Encuentra la posición de una subcadena dentro de un texto.',
+   syn:'INSTR(texto, subcadena)          -- SQLite\nPOSITION(sub IN texto)           -- PostgreSQL',
+   ex:"INSTR('Fernando', 'nando')  -- 3\nPOSITION('@' IN email)     -- posición del @ (PostgreSQL)",
+   note:'En SQLite: INSTR(). En PostgreSQL: POSITION() o STRPOS().'},
+],
+'b8':[
+  {cmd:'CURRENT_DATE / date()',desc:'Devuelve la fecha actual del sistema.',
+   syn:"CURRENT_DATE          -- PostgreSQL\ndate('now')           -- SQLite",
+   ex:"SELECT CURRENT_DATE;         -- PostgreSQL: 2025-03-15\nSELECT date('now');          -- SQLite: 2025-03-15\nWHERE fecha_ing <= CURRENT_DATE",
+   note:'Esta app usa SQLite → date(\'now\'). En PostgreSQL usa CURRENT_DATE o NOW()::DATE.'},
+  {cmd:'strftime / EXTRACT',desc:'Extrae partes de una fecha (año, mes, día, hora).',
+   syn:"strftime('%Y', fecha)     -- SQLite: año\nstrftime('%m', fecha)     -- SQLite: mes\nEXTRACT(YEAR FROM fecha)  -- PostgreSQL\nDATE_PART('month', fecha) -- PostgreSQL",
+   ex:"strftime('%Y', fecha_ing)         -- '2020'\nEXTRACT(YEAR FROM fecha_ing)      -- 2020 (PostgreSQL)\nTO_CHAR(fecha_ing, 'YYYY-MM')     -- '2020-03' (PostgreSQL)",
+   note:'En PostgreSQL: EXTRACT() o DATE_PART(). En SQLite: strftime().'},
+  {cmd:'julianday / diferencia',desc:'Calcula diferencia entre fechas. PostgreSQL usa resta directa.',
+   syn:"julianday(f2) - julianday(f1)   -- SQLite: días\nf2 - f1                         -- PostgreSQL: intervalo\nAGE(f2, f1)                     -- PostgreSQL: texto legible",
+   ex:"CAST(julianday('now') - julianday(fecha_ing) AS INT)  -- días (SQLite)\nCURRENT_DATE - fecha_ing                               -- días (PostgreSQL)\nAGE(CURRENT_DATE, fecha_ing)                           -- '4 years 2 months' (PostgreSQL)"},
+  {cmd:'Filtrar por fecha',desc:'Las fechas en formato YYYY-MM-DD se comparan como texto y funcionan correctamente.',
+   syn:"WHERE fecha > 'YYYY-MM-DD'\nWHERE fecha BETWEEN 'YYYY-MM-DD' AND 'YYYY-MM-DD'",
+   ex:"WHERE fecha_ing > '2021-01-01'\nWHERE fecha_ing BETWEEN '2020-01-01' AND '2021-12-31'\n-- Funciona igual en SQLite y PostgreSQL"},
+],
+'b9':[
+  {cmd:'INNER JOIN',desc:'Devuelve solo las filas que tienen coincidencia en AMBAS tablas. Excluye filas sin pareja.',
+   syn:'SELECT ...\nFROM tabla_a a\nINNER JOIN tabla_b b ON a.col = b.col;',
+   ex:'SELECT e.nombre, d.nombre\nFROM empleados e\nINNER JOIN departamentos d ON e.id_dep = d.id_dep;\n-- Excluye empleados sin departamento (id_dep NULL)'},
+  {cmd:'LEFT JOIN',desc:'Devuelve TODAS las filas de la tabla izquierda. Columnas de la derecha serán NULL si no hay coincidencia.',
+   syn:'SELECT ...\nFROM tabla_a a\nLEFT JOIN tabla_b b ON a.col = b.col;',
+   ex:'SELECT e.nombre, d.nombre\nFROM empleados e\nLEFT JOIN departamentos d ON e.id_dep = d.id_dep;\n-- Incluye empleados sin departamento (d.nombre = NULL)'},
+  {cmd:'RIGHT JOIN',desc:'Igual que LEFT JOIN pero invirtiendo las tablas. En la práctica se evita — es más claro reordenar las tablas y usar LEFT JOIN.',
+   syn:'FROM tabla_a a RIGHT JOIN tabla_b b ON ...',
+   ex:'-- Equivalente:\nFROM tabla_b b LEFT JOIN tabla_a a ON ...\n-- Son el mismo resultado, mejor usar LEFT JOIN'},
+  {cmd:'FULL OUTER JOIN',desc:'Devuelve TODAS las filas de ambas tablas. NULL donde no hay coincidencia en ninguno de los lados.',
+   syn:'FROM tabla_a a FULL OUTER JOIN tabla_b b ON ...',
+   ex:'SELECT e.nombre, d.nombre\nFROM empleados e\nFULL OUTER JOIN departamentos d ON e.id_dep = d.id_dep;\n-- Incluye empleados sin dep. Y deps sin empleados',
+   note:'SQLite no soporta FULL OUTER JOIN. PostgreSQL sí.'},
+  {cmd:'JOIN 3+ tablas',desc:'Encadena múltiples JOINs para conectar más de dos tablas.',
+   syn:'FROM t1\nJOIN t2 ON t1.col = t2.col\nJOIN t3 ON t2.col = t3.col',
+   ex:'FROM empleados e\nJOIN asignaciones a ON e.id_emp = a.id_emp\nJOIN proyectos p ON a.id_proy = p.id_proy\n-- Conecta las 3 tablas en cadena'},
+  {cmd:'SELF JOIN',desc:'Une una tabla consigo misma. Se necesitan dos aliases diferentes para la misma tabla.',
+   syn:'FROM tabla a\nLEFT JOIN tabla b ON a.col_fk = b.col_pk',
+   ex:'FROM empleados e\nLEFT JOIN empleados j ON e.jefe_id = j.id_emp\n-- e = empleado, j = su jefe (mismo tabla, distinto alias)'},
+],
+'b10':[
+  {cmd:'Subquery en WHERE',desc:'Query dentro del WHERE que devuelve un valor escalar para comparar.',
+   syn:'WHERE col operador (SELECT ... FROM ...)',
+   ex:'WHERE salario > (SELECT AVG(salario) FROM empleados)\n-- La subquery devuelve un número, lo compara con salario'},
+  {cmd:'IN / NOT IN con subquery',desc:'Filtra filas cuyo valor esté (o no esté) en el resultado de una subquery.',
+   syn:'WHERE col IN (SELECT col FROM ...)\nWHERE col NOT IN (SELECT col FROM ...)',
+   ex:'WHERE id_emp IN (SELECT DISTINCT id_emp FROM asignaciones)\n-- Solo empleados que tienen al menos una asignación'},
+  {cmd:'EXISTS / NOT EXISTS',desc:'Devuelve TRUE si la subquery tiene al menos una fila. Es eficiente porque para en la primera coincidencia.',
+   syn:'WHERE EXISTS (SELECT 1 FROM tabla WHERE condición)\nWHERE NOT EXISTS (...)',
+   ex:'WHERE EXISTS (\n  SELECT 1 FROM asignaciones a\n  WHERE a.id_proy = p.id_proy\n)\n-- "¿Existe alguna asignación para este proyecto?"',
+   note:'EXISTS suele ser más eficiente que IN para subqueries grandes.'},
+  {cmd:'Subquery en SELECT',desc:'Subquery correlacionada: se ejecuta una vez por cada fila del query exterior. Referencia columnas del exterior.',
+   syn:'SELECT col,\n  (SELECT AGG(...) FROM t2 WHERE t2.fk = t1.pk) AS alias\nFROM tabla t1',
+   ex:'SELECT nombre,\n  (SELECT COUNT(*) FROM asignaciones a\n   WHERE a.id_emp = e.id_emp) AS num_proyectos\nFROM empleados e\n-- Para cada empleado, cuenta sus proyectos'},
+  {cmd:'Subquery en FROM',desc:'Usa el resultado de una subquery como tabla temporal (se llama "tabla derivada").',
+   syn:'SELECT ...\nFROM (SELECT ... FROM tabla) AS alias',
+   ex:'SELECT avg_dep.*\nFROM (\n  SELECT id_dep, AVG(salario) AS prom\n  FROM empleados GROUP BY id_dep\n) AS avg_dep\nWHERE prom > 40000;'},
+],
+'b11':[
+  {cmd:'INSERT INTO',desc:'Inserta una o más filas en una tabla.',
+   syn:"INSERT INTO tabla (col1, col2) VALUES (val1, val2);\nINSERT INTO tabla (col1, col2) VALUES (...), (...);",
+   ex:"INSERT INTO departamentos (id_dep, nombre, ciudad)\nVALUES (5, 'Marketing', 'CDMX');\n\n-- Múltiple:\nINSERT INTO proyectos VALUES\n  (5, 'App', 80000, 'activo'),\n  (6, 'API', 60000, 'pausado');"},
+  {cmd:'UPDATE',desc:'Modifica valores en filas existentes. El WHERE es crítico — sin él afecta TODAS las filas.',
+   syn:'UPDATE tabla\nSET col1 = val1, col2 = val2\nWHERE condición;',
+   ex:'UPDATE empleados\nSET salario = salario * 1.10, id_dep = 2\nWHERE id_emp = 10;\n\n-- ⚠️ SIN WHERE: modifica TODOS los registros',
+   note:'⚠️ Siempre prueba primero con SELECT usando el mismo WHERE antes de ejecutar el UPDATE.'},
+  {cmd:'DELETE',desc:'Elimina filas de una tabla. Sin WHERE elimina todo el contenido.',
+   syn:'DELETE FROM tabla WHERE condición;',
+   ex:'DELETE FROM asignaciones WHERE id_emp = 9;\nDELETE FROM empleados WHERE id_emp = 9;\n-- Primero eliminar dependientes (FK), luego el registro',
+   note:'⚠️ TRUNCATE es más rápido para vaciar toda una tabla. DELETE genera log de cada fila.'},
+  {cmd:'ON CONFLICT (UPSERT)',desc:'Define qué hacer si hay conflicto de clave única al insertar: ignorar o actualizar.',
+   syn:'INSERT INTO tabla (...) VALUES (...)\nON CONFLICT DO NOTHING;\n\nON CONFLICT (col) DO UPDATE SET col = EXCLUDED.col;',
+   ex:"INSERT INTO clientes (email, nombre)\nVALUES ('fer@mail.com', 'Fernando')\nON CONFLICT (email)\nDO UPDATE SET nombre = EXCLUDED.nombre;",
+   note:'EXCLUDED hace referencia a los valores que se intentaron insertar.'},
+  {cmd:'RETURNING',desc:'Devuelve los valores de las filas afectadas después de INSERT/UPDATE/DELETE.',
+   syn:'INSERT INTO tabla (...) VALUES (...) RETURNING col;\nUPDATE tabla SET ... WHERE ... RETURNING *;',
+   ex:"INSERT INTO departamentos (nombre) VALUES ('IT')\nRETURNING id_dep, nombre;\n-- Devuelve el id generado automáticamente",
+   note:'Muy útil para obtener el ID autoincremental después de un INSERT. PostgreSQL y SQLite 3.35+ lo soportan.'},
+],
+'b12':[
+  {cmd:'BEGIN / START TRANSACTION',desc:'Inicia una transacción. Todas las operaciones siguientes son parte del mismo bloque atómico.',
+   syn:'BEGIN;\n-- operaciones SQL\nCOMMIT; -- o ROLLBACK;',
+   ex:'BEGIN;\nUPDATE cuentas SET saldo = saldo - 500 WHERE id = 1;\nUPDATE cuentas SET saldo = saldo + 500 WHERE id = 2;\nCOMMIT; -- guarda ambas operaciones o ninguna'},
+  {cmd:'COMMIT',desc:'Confirma y guarda permanentemente todos los cambios de la transacción actual.',
+   syn:'COMMIT;',
+   ex:'BEGIN;\nDELETE FROM temp_logs WHERE fecha < \'2020-01-01\';\nCOMMIT;\n-- Los datos se borran definitivamente'},
+  {cmd:'ROLLBACK',desc:'Deshace todos los cambios desde el BEGIN. La BD vuelve al estado anterior.',
+   syn:'ROLLBACK;',
+   ex:'BEGIN;\nDELETE FROM empleados; -- ¡error!\nROLLBACK;             -- nadie fue borrado\n-- La tabla queda intacta'},
+  {cmd:'SAVEPOINT',desc:'Crea un punto de restauración parcial dentro de una transacción activa.',
+   syn:'SAVEPOINT nombre;\n-- más operaciones\nROLLBACK TO nombre; -- vuelve al savepoint\nRELEASE SAVEPOINT nombre; -- elimina el savepoint',
+   ex:'BEGIN;\nINSERT INTO clientes VALUES (...);\nSAVEPOINT sp1;\nINSERT INTO pagos VALUES (...);\nROLLBACK TO sp1; -- deshace solo el pago\nCOMMIT;          -- guarda solo el cliente'},
+],
+'b14':[
+  {cmd:'CREATE VIEW',desc:'Crea una vista: una query guardada con nombre que se consulta como si fuera una tabla.',
+   syn:'CREATE VIEW nombre AS\nSELECT ...',
+   ex:'CREATE VIEW vista_emp_dep AS\nSELECT e.nombre, e.salario, d.nombre AS dep\nFROM empleados e\nLEFT JOIN departamentos d ON e.id_dep=d.id_dep;\n\n-- Uso: SELECT * FROM vista_emp_dep;'},
+  {cmd:'CREATE OR REPLACE VIEW',desc:'Crea la vista si no existe, o la reemplaza si ya existe. Sin perder dependencias.',
+   syn:'CREATE OR REPLACE VIEW nombre AS\nSELECT ...;',
+   ex:'CREATE OR REPLACE VIEW vista_emp_dep AS\nSELECT e.nombre, e.salario, e.puesto, d.nombre AS dep\nFROM empleados e LEFT JOIN departamentos d ON e.id_dep=d.id_dep;',
+   note:'SQLite no soporta CREATE OR REPLACE VIEW. Usa DROP VIEW IF EXISTS + CREATE VIEW.'},
+  {cmd:'CREATE MATERIALIZED VIEW',desc:'Vista que guarda físicamente el resultado de la query. Más rápida de consultar pero necesita actualizarse manualmente.',
+   syn:'CREATE MATERIALIZED VIEW nombre AS SELECT ...;\nREFRESH MATERIALIZED VIEW nombre;',
+   ex:'CREATE MATERIALIZED VIEW mv_resumen AS\nSELECT id_dep, COUNT(*), AVG(salario)\nFROM empleados GROUP BY id_dep;\n\nREFRESH MATERIALIZED VIEW mv_resumen;',
+   note:'Solo PostgreSQL. SQLite no soporta vistas materializadas.'},
+  {cmd:'DROP VIEW',desc:'Elimina una vista. No afecta los datos de las tablas subyacentes.',
+   syn:'DROP VIEW nombre;\nDROP VIEW IF EXISTS nombre;',
+   ex:'DROP VIEW IF EXISTS vista_emp_dep;\n-- La vista desaparece pero empleados y departamentos\n-- quedan intactos'},
+],
+'b15':[
+  {cmd:'CREATE USER',desc:'Crea un usuario que puede conectarse a la base de datos.',
+   syn:"CREATE USER nombre WITH PASSWORD 'contraseña';",
+   ex:"CREATE USER analista_ro WITH PASSWORD 'Segura2024!';\nCREATE USER app_backend WITH PASSWORD 'BackPass!';"},
+  {cmd:'CREATE ROLE',desc:'Crea un rol (contenedor de permisos). Sin LOGIN por defecto — se asigna a usuarios.',
+   syn:'CREATE ROLE nombre;\nCREATE ROLE nombre LOGIN PASSWORD \'pass\';',
+   ex:'CREATE ROLE rol_lectores;\nGRANT SELECT ON empleados TO rol_lectores;\n-- Luego:\nGRANT rol_lectores TO analista_ro;'},
+  {cmd:'GRANT',desc:'Otorga permisos a un usuario o rol sobre un objeto.',
+   syn:'GRANT permiso ON objeto TO usuario;\nGRANT rol TO usuario;',
+   ex:'GRANT SELECT ON empleados TO analista_ro;\nGRANT SELECT, INSERT ON proyectos TO app_backend;\nGRANT ALL PRIVILEGES ON empleados TO admin_bd;',
+   note:'Permisos disponibles: SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER, ALL.'},
+  {cmd:'REVOKE',desc:'Quita permisos previamente otorgados. Es el inverso exacto de GRANT.',
+   syn:'REVOKE permiso ON objeto FROM usuario;',
+   ex:'REVOKE SELECT ON empleados FROM analista_ro;\nREVOKE ALL PRIVILEGES ON empleados FROM app_backend;'},
+  {cmd:'ALTER USER',desc:'Modifica atributos de un usuario existente (contraseña, rol, etc.).',
+   syn:"ALTER USER nombre WITH PASSWORD 'nueva_clave';\nALTER USER nombre WITH SUPERUSER;",
+   ex:"ALTER USER analista_ro WITH PASSWORD 'NuevaClave2024!';\nALTER USER app_backend WITH NOSUPERUSER;"},
+],
+'b17':[
+  {cmd:'WITH (CTE básica)',desc:'Common Table Expression: una query nombrada y reutilizable dentro de otra query. Mejora la legibilidad.',
+   syn:'WITH nombre AS (\n  SELECT ...\n)\nSELECT * FROM nombre WHERE ...;',
+   ex:'WITH tech_team AS (\n  SELECT * FROM empleados WHERE id_dep = 1\n)\nSELECT nombre, salario\nFROM tech_team\nWHERE salario > 40000;'},
+  {cmd:'WITH múltiple',desc:'Puedes encadenar varias CTEs separándolas con comas.',
+   syn:'WITH\n  cte1 AS (SELECT ...),\n  cte2 AS (SELECT ... FROM cte1)\nSELECT * FROM cte2;',
+   ex:'WITH\n  top3 AS (SELECT * FROM empleados ORDER BY salario DESC LIMIT 3),\n  sus_proyectos AS (SELECT t.nombre, p.nombre FROM top3 t JOIN asignaciones a ON t.id_emp=a.id_emp JOIN proyectos p ON a.id_proy=p.id_proy)\nSELECT * FROM sus_proyectos;'},
+  {cmd:'WITH RECURSIVE',desc:'CTE que se referencia a sí misma para recorrer datos jerárquicos (org charts, categorías anidadas, árboles).',
+   syn:'WITH RECURSIVE nombre AS (\n  -- Caso base (inicio)\n  SELECT ... WHERE condición_inicial\n  UNION ALL\n  -- Caso recursivo (referencia a la CTE misma)\n  SELECT ... FROM tabla JOIN nombre ON ...\n)\nSELECT * FROM nombre;',
+   ex:'WITH RECURSIVE jerarquia AS (\n  SELECT id_emp, nombre, 1 AS nivel\n  FROM empleados WHERE jefe_id IS NULL  -- raíz\n  UNION ALL\n  SELECT e.id_emp, e.nombre, j.nivel + 1\n  FROM empleados e\n  JOIN jerarquia j ON e.jefe_id = j.id_emp  -- recursión\n)\nSELECT nombre, nivel FROM jerarquia ORDER BY nivel;'},
+]};
+
+// ─────────────────────────────────────────
+// RENDER REFERENCE
+// ─────────────────────────────────────────
+function renderRef(blk){
+  const refs = BLOCK_REFS[blk.id];
+  if(!refs||!refs.length) return '';
+  const refId = 'ref-'+blk.id;
+  const open = !localStorage.getItem('ref_closed_'+blk.id);
+  let cards = refs.map(r=>`
+    <div class="ref-card">
+      <div class="ref-cmd-name" style="color:${blk.color}">${r.cmd}</div>
+      <div class="ref-cmd-desc">${r.desc}</div>
+      <div class="ref-sub">SINTAXIS</div>
+      <div class="ref-code">${r.syn}</div>
+      ${r.ex?`<div class="ref-sub">EJEMPLO</div><div class="ref-ex">${r.ex}</div>`:''}
+      ${r.note?`<div class="ref-note">📝 ${r.note}</div>`:''}
+    </div>`).join('');
+  return `<div class="ref-section">
+    <div class="ref-head" onclick="toggleRef('${refId}','${blk.id}')">
+      <div class="ref-head-left">
+        <span class="ref-lbl" style="color:${blk.color}">REFERENCIA RÁPIDA</span>
+        <span class="ref-title">Comandos de este bloque con sintaxis y ejemplos</span>
+      </div>
+      <span class="ref-toggle ${open?'open':''}" id="tog-${refId}">▼</span>
+    </div>
+    <div class="ref-body ${open?'open':''}" id="${refId}">
+      <div class="ref-grid">${cards}</div>
+    </div>
+  </div>`;
+}
+
+function toggleRef(refId, blkId){
+  const body = document.getElementById(refId);
+  const tog = document.getElementById('tog-'+refId);
+  if(!body) return;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open');
+  tog.classList.toggle('open');
+  if(isOpen) localStorage.setItem('ref_closed_'+blkId,'1');
+  else localStorage.removeItem('ref_closed_'+blkId);
+}
+
+// ─────────────────────────────────────────
+// MAIN RENDER
+// ─────────────────────────────────────────
+function setBlock(i){ curBlock=i; viewSchema=false; renderAll(); window.scrollTo&&document.querySelector('main').scrollTo(0,0); }
+function setSchema(){ viewSchema=true; renderAll(); }
+function renderAll(){ renderSidebar(); renderMain(); updateProgress(); }
+
+function renderMain(){
+  const main=document.getElementById('main');
+  if(viewSchema){ main.innerHTML=schemaPage(); return; }
+  const blk=BLOCKS[curBlock];
+  let h=`<div class="blk-head">
+    <span class="blk-lbl" style="color:${blk.color}">${blk.num}</span>
+    <span class="blk-title">${blk.title}</span>
+  </div>`;
+  if(blk.nota_bloque) h+=`<div class="nota" style="margin-bottom:16px">⚠️ ${blk.nota_bloque}</div>`;
+  h += renderRef(blk);
+  blk.ejercicios.forEach(ej=>{
+    h += blk.tipo==='sql' ? renderSqlCard(ej,blk.color) : renderTeoriaCard(ej,blk.color);
+  });
+  main.innerHTML=h;
+}
+
+// ─────────────────────────────────────────
+// SQL CARD
+// ─────────────────────────────────────────
+function renderSqlCard(ej,color){
+  const att=attempts[ej.id]||0;
+  const done=completed[ej.id];
+  const shown=solShown[ej.id];
+  const state=done?'state-correct':shown?'state-failed':'';
+  const statusTxt=done?'<span class="c-status done">✓ Correcto</span>':att>0?`<span class="c-status">${att}/${MAX_ATT} intentos</span>`:'';
+  
+  const h1vis=att>=2&&!done?' show':'';
+  const h2vis=att>=4&&!done?' show':'';
+  
+  const hints=`<div class="hints">
+    ${ej.h1?`<div class="hint hint-1${h1vis}"><span>💡 Pista 1:</span>${ej.h1}</div>`:''}
+    ${ej.h2?`<div class="hint hint-2${h2vis}"><span>💡 Pista 2:</span>${ej.h2}</div>`:''}
+  </div>`;
+  
+  const attClass=att>=MAX_ATT-1?'danger':att>=2?'warn':'';
+  const solVisible=shown||done;
+  
+  return `<div class="card ${state}" id="card-${ej.id}">
+    <div class="card-head">
+      <div class="c-meta">
+        <span class="c-id">Ejercicio ${ej.id}</span>
+        <span class="badge b-${(ej.nivel||'Básico').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}">${ej.nivel||'Básico'}</span>
+    <div class="card-body">
+      <div class="enunciado">${ej.q}</div>
+      ${ej.nota?`<div class="nota">📝 ${ej.nota}</div>`:''}
+      ${hints}
+      <div class="editor-label">QUERY SQL</div>
+      <textarea class="sql-area" id="ta-${ej.id}" spellcheck="false" ${done?'disabled':''}
+        onkeydown="handleTab(event)">${done&&ej.sol?ej.sol:''}</textarea>
+      <div class="act-row">
+        <button class="btn-run" id="btn-${ej.id}" onclick="runExercise('${ej.id}')" ${!dbReady||done?'disabled':''}>
+          ▶ Ejecutar
+        </button>
+        <button class="btn-clear" onclick="clearEditor('${ej.id}')">Limpiar</button>
+        <span class="att-info ${attClass}" id="att-${ej.id}">${att>0&&!done?`Intento ${att}/${MAX_ATT}`:''}</span>
+      </div>
+      <div id="result-${ej.id}"></div>
+      <div class="sol-wrap${solVisible?' show':''}" id="sol-${ej.id}">
+        <div class="sol-lbl">SOLUCIÓN${shown&&!done?' — MÁXIMO DE INTENTOS ALCANZADO':''}</div>
+        <div class="sol-code">${ej.sol}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─────────────────────────────────────────
+// TEORIA CARD
+// ─────────────────────────────────────────
+function renderTeoriaCard(ej,color){
+  const done=completed[ej.id];
+  const att=attempts[ej.id]||0;
+  const state=done?'state-correct':att>=3&&!done?'state-failed':'';
+  
+  let optsH='<div class="options-list">';
+  ej.opts.forEach((opt,i)=>{
+    let cls='opt';
+    if(done||solShown[ej.id]){
+      const selIdx = attempts[ej.id+'_sel'];
+      cls+=i===ej.ans?' opt-correct':(selIdx!==undefined&&selIdx!==null&&i===selIdx&&!done)?' opt-wrong':'';
+      cls+=' disabled';
+    }
+    optsH+=`<div class="${cls}" id="opt-${ej.id}-${i}" onclick="selectOpt('${ej.id}',${i})">
+      <div class="opt-dot"></div>${opt}
+    </div>`;
+  });
+  optsH+='</div>';
+  
+  const explVisible=done||solShown[ej.id];
+  
+  return `<div class="card ${state}" id="card-${ej.id}">
+    <div class="card-head">
+      <div class="c-meta">
+        <span class="c-id">Ejercicio ${ej.id}</span>
+        <span class="badge b-${(ej.nivel||'Básico').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')}">${ej.nivel||'Básico'}</span>
+    </div>
+    <div class="card-body">
+      <div class="enunciado">${ej.q}</div>
+      ${optsH}
+      <div class="expl${explVisible?' show':''}" id="expl-${ej.id}">${ej.expl}</div>
+      ${!done&&!solShown[ej.id]?`<button class="btn-verify" id="vbtn-${ej.id}" onclick="verifyTeo('${ej.id}')" disabled>Verificar</button>`:''}
+    </div>
+  </div>`;
+}
+
+// ─────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────
+function findEj(id){
+  for(const blk of BLOCKS){
+    const ej = blk.ejercicios.find(e=>e.id===id);
+    if(ej) return {ej, blk};
+  }
+  return null;
+}
+
+// ─────────────────────────────────────────
+// SQL EXERCISE LOGIC
+// ─────────────────────────────────────────
+function handleTab(e){
+  if(e.key==='Tab'){
+    e.preventDefault();
+    const ta=e.target, s=ta.selectionStart, end=ta.selectionEnd;
+    ta.value=ta.value.substring(0,s)+'  '+ta.value.substring(end);
+    ta.selectionStart=ta.selectionEnd=s+2;
+  }
+}
+
+function clearEditor(id){
+  const ta=document.getElementById('ta-'+id);
+  if(ta) ta.value='';
+  document.getElementById('result-'+id).innerHTML='';
+}
+
+function runExercise(id){
+  if(!dbReady) return;
+  const found=findEj(id);
+  if(!found) return;
+  const {ej}=found;
+  
+  const userSql=document.getElementById('ta-'+id).value.trim();
+  if(!userSql){ showMsg(id,'Escribe una query primero.','info'); return; }
+  
+  resetDB();
+  let userResult, ok=false, errMsg='';
+  
+  try{
+    if(ej.tipo==='select'){
+      userResult=db.exec(userSql);
+    } else {
+      const stmts=userSql.split(';').map(s=>s.trim()).filter(Boolean);
+      stmts.forEach(s=>db.run(s));
+      userResult=db.exec(ej.verify);
+    }
+    ok = normalizeResult(userResult)===normalizeResult(expected[id]);
+  }catch(e){ errMsg=e.message; }
+  
+  attempts[id]=(attempts[id]||0)+1;
+  const att=attempts[id];
+  saveState();
+  
+  const attEl=document.getElementById('att-'+id);
+  if(attEl) attEl.textContent=`Intento ${att}/${MAX_ATT}`;
+  if(attEl) attEl.className='att-info'+(att>=MAX_ATT-1?' danger':att>=2?' warn':'');
+  
+  if(errMsg){
+    showMsg(id,`Error SQL: ${errMsg}`,'err');
+    document.getElementById('ta-'+id).className='sql-area border-err';
+    showHints(id,att);
+    return;
+  }
+  
+  if(ok){
+    completed[id]=true;
+    saveState();
+    document.getElementById('ta-'+id).className='sql-area border-ok';
+    document.getElementById('btn-'+id).disabled=true;
+    document.getElementById('ta-'+id).disabled=true;
+    document.getElementById('card-'+id).className='card state-correct';
+    if(attEl) attEl.textContent='';
+    showMsg(id,'✓ Correcto — resultado coincide exactamente.','ok');
+    showResultTable(id,userResult);
+    updateProgress();
+    renderSidebar();
+  } else {
+    document.getElementById('ta-'+id).className='sql-area border-err';
+    showMsg(id,att>=MAX_ATT
+      ?'✗ Máximo de intentos alcanzado. Revisa la solución abajo.'
+      :`✗ Resultado incorrecto. Revisa tu query.${att===2?' (Pista 1 disponible)':att===4?' (Pista 2 disponible)':''}`
+    ,'err');
+    showResultTable(id,userResult);
+    showHints(id,att);
+    if(att>=MAX_ATT){
+      solShown[id]=true; saveState();
+      const sol=document.getElementById('sol-'+id);
+      if(sol) sol.classList.add('show');
+      const card=document.getElementById('card-'+id);
+      if(card) card.className='card state-failed';
+    }
+  }
+}
+
+function showHints(id,att){
+  const found=findEj(id);
+  if(!found) return;
+  const card=document.getElementById('card-'+id);
+  if(!card) return;
+  const h1=card.querySelector('.hint-1'), h2=card.querySelector('.hint-2');
+  if(h1&&att>=2) h1.classList.add('show');
+  if(h2&&att>=4) h2.classList.add('show');
+}
+
+function showMsg(id,text,type){
+  const r=document.getElementById('result-'+id);
+  if(r) r.innerHTML=`<div class="msg msg-${type}">${text}</div>`;
+}
+
+function showResultTable(id,result){
+  const r=document.getElementById('result-'+id);
+  if(!r) return;
+  if(!result||!result.length){ if(!r.querySelector('.tbl-wrap')) r.innerHTML+='<div class="msg msg-info">Query ejecutada (sin filas devueltas)</div>'; return; }
+  const cols=result[0].columns, rows=result[0].values;
+  let t=`<div class="tbl-wrap"><table class="res"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`;
+  rows.slice(0,50).forEach(row=>{ t+=`<tr>${row.map(v=>`<td>${v===null?'<span style="color:var(--dim)">NULL</span>':v}</td>`).join('')}</tr>`; });
+  if(rows.length>50) t+=`<tr><td colspan="${cols.length}" style="color:var(--muted);text-align:center">... ${rows.length-50} filas más</td></tr>`;
+  t+=`</tbody></table></div>`;
+  const msg=r.querySelector('.msg');
+  if(msg) msg.insertAdjacentHTML('afterend',t); else r.innerHTML+=t;
+}
+
+// ─────────────────────────────────────────
+// TEORIA LOGIC
+// ─────────────────────────────────────────
+function selectOpt(ejId,optIdx){
+  const found=findEj(ejId);
+  if(!found||completed[ejId]||solShown[ejId]) return;
+  
+  document.querySelectorAll(`[id^="opt-${ejId}-"]`).forEach(el=>el.classList.remove('selected'));
+  const sel=document.getElementById(`opt-${ejId}-${optIdx}`);
+  if(sel) sel.classList.add('selected');
+  
+  attempts[ejId+'_sel']=optIdx;
+  const vbtn=document.getElementById('vbtn-'+ejId);
+  if(vbtn) vbtn.disabled=false;
+}
+
+function verifyTeo(ejId){
+  const found=findEj(ejId);
+  if(!found) return;
+  const {ej}=found;
+  
+  const sel=attempts[ejId+'_sel'];
+  if(sel===undefined||sel===null) return;
+  
+  attempts[ejId]=(attempts[ejId]||0)+1;
+  saveState();
+  
+  if(sel===ej.ans){
+    completed[ejId]=true; saveState();
+    document.getElementById('card-'+ejId).className='card state-correct';
+    document.querySelectorAll(`[id^="opt-${ejId}-"]`).forEach((el,i)=>{
+      el.classList.remove('selected');
+      if(i===ej.ans) el.classList.add('opt-correct');
+      el.classList.add('disabled');
+      el.onclick=null;
+    });
+    const expl=document.getElementById('expl-'+ejId);
+    if(expl) expl.classList.add('show');
+    const vbtn=document.getElementById('vbtn-'+ejId);
+    if(vbtn) vbtn.style.display='none';
+    updateProgress(); renderSidebar();
+  } else {
+    document.querySelectorAll(`[id^="opt-${ejId}-"]`).forEach((el,i)=>{
+      if(i===sel) el.classList.add('opt-wrong');
+    });
+    if((attempts[ejId]||0)>=3){
+      solShown[ejId]=true; saveState();
+      document.getElementById('card-'+ejId).className='card state-failed';
+      document.querySelectorAll(`[id^="opt-${ejId}-"]`).forEach((el,i)=>{
+        el.classList.remove('selected','opt-wrong');
+        if(i===ej.ans) el.classList.add('opt-correct');
+        el.classList.add('disabled'); el.onclick=null;
+      });
+      const expl=document.getElementById('expl-'+ejId);
+      if(expl) expl.classList.add('show');
+      const vbtn=document.getElementById('vbtn-'+ejId);
+      if(vbtn) vbtn.style.display='none';
+    }
+    setTimeout(()=>{
+      document.querySelectorAll(`[id^="opt-${ejId}-"]`).forEach(el=>el.classList.remove('opt-wrong'));
+    },800);
+  }
+}
+
+// ─────────────────────────────────────────
+// SCHEMA PAGE
+// ─────────────────────────────────────────
+function schemaPage(){
+  return `<div class="schema-intro">
+    Base de datos de práctica. Ejecuta el script en PostgreSQL o pgAdmin para tener los mismos datos.
+    <br><br>Esta app usa SQLite internamente — el 95% de la sintaxis es idéntica a PostgreSQL. Las diferencias se señalan en cada ejercicio.
+  </div>
+  <div class="schema-section">
+    <h3>ESTRUCTURA DE TABLAS</h3>
+    <div class="schema-code">-- departamentos
+CREATE TABLE departamentos (
+  id_dep  SERIAL PRIMARY KEY,
+  nombre  VARCHAR(100) NOT NULL,
+  ciudad  VARCHAR(100)
 );
 
+-- empleados
 CREATE TABLE empleados (
   id_emp    SERIAL PRIMARY KEY,
   nombre    VARCHAR(100) NOT NULL,
   puesto    VARCHAR(100),
   salario   NUMERIC(10,2),
   fecha_ing DATE,
-  id_dep    INT REFERENCES departamentos(id_dep)
+  id_dep    INT REFERENCES departamentos(id_dep),
+  jefe_id   INT REFERENCES empleados(id_emp)
 );
 
+-- proyectos
 CREATE TABLE proyectos (
   id_proy     SERIAL PRIMARY KEY,
   nombre      VARCHAR(150) NOT NULL,
   presupuesto NUMERIC(12,2),
-  estado      VARCHAR(20) CHECK (estado IN ('activo','pausado','cerrado'))
+  estado      VARCHAR(20) CHECK(estado IN ('activo','pausado','cerrado'))
 );
 
+-- asignaciones
 CREATE TABLE asignaciones (
   id_emp  INT REFERENCES empleados(id_emp),
   id_proy INT REFERENCES proyectos(id_proy),
   horas   INT,
-  PRIMARY KEY (id_emp, id_proy)
-);
+  PRIMARY KEY(id_emp, id_proy)
+);</div>
+  </div>
+  <div class="schema-section">
+    <h3>DATOS DE EJEMPLO</h3>
+    <div class="schema-code">-- 4 departamentos, 10 empleados, 4 proyectos, 12 asignaciones
+-- Empleados con jefe_id para ejercicios de SELF JOIN:
+--   Luis Ramos → jefe: Ana Torres
+--   Iván Cruz  → jefe: Ana Torres
+--   Jorge Díaz → jefe: Carmen Vega
+--   Elena Soto → jefe: Carmen Vega
+--   Sofía León → jefe: Marco Ruiz</div>
+  </div>
+  <div class="schema-section">
+    <h3>COMANDOS PARA EXPLORAR EN PGADMIN / PSQL</h3>
+    <div class="schema-code">-- Ver todas las tablas
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public';
 
-INSERT INTO departamentos VALUES
-  (1,'Tecnología','Ciudad de México'),
-  (2,'Ventas','Guadalajara'),
-  (3,'Finanzas','Ciudad de México'),
-  (4,'Recursos Humanos','Monterrey');
+-- Ver columnas de una tabla
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_name = 'empleados';
 
-INSERT INTO empleados VALUES
-  (1,'Ana Torres','Desarrolladora',42000,'2020-03-15',1),
-  (2,'Luis Ramos','Analista',35000,'2019-08-01',1),
-  (3,'Carmen Vega','Gerente de Ventas',58000,'2018-01-10',2),
-  (4,'Jorge Díaz','Vendedor',28000,'2021-06-20',2),
-  (5,'Sofía León','Contadora',38000,'2020-11-05',3),
-  (6,'Marco Ruiz','Director Financiero',72000,'2017-04-22',3),
-  (7,'Paula Méndez','Reclutadora',31000,'2022-02-14',4),
-  (8,'Iván Cruz','Desarrollador',45000,'2021-09-30',1),
-  (9,'Elena Soto','Vendedora',26000,'2023-01-08',2),
-  (10,'Roberto Gil','Sin asignar',29000,'2022-07-19',NULL);
-
-INSERT INTO proyectos VALUES
-  (1,'App Móvil Clientes',150000,'activo'),
-  (2,'Migración Cloud',320000,'activo'),
-  (3,'CRM Interno',90000,'pausado'),
-  (4,'Auditoría Fiscal',45000,'cerrado');
-
-INSERT INTO asignaciones VALUES
-  (1,1,120),(1,2,80),(2,2,200),(2,3,60),
-  (3,3,40),(4,1,30),(5,4,150),(6,4,50),
-  (7,3,20),(8,1,180),(8,2,90),(9,1,10);`;
-
-const fases = [
-  {
-    fase: "FASE 1", titulo: "SELECT Básico", color: "#4ade80",
-    ejercicios: [
-      { id:"1.1", nivel:"Básico", concepto:"SELECT *",
-        enunciado:"Obtén todos los datos de la tabla empleados.",
-        pista:"Usa SELECT * para obtener todas las columnas.",
-        respuesta:"SELECT * FROM empleados;" },
-      { id:"1.2", nivel:"Básico", concepto:"SELECT columnas + ORDER BY",
-        enunciado:"Muestra solo el nombre, puesto y salario de todos los empleados, ordenados de mayor a menor salario.",
-        pista:"Selecciona columnas específicas y usa ORDER BY con DESC.",
-        respuesta:"SELECT nombre, puesto, salario\nFROM empleados\nORDER BY salario DESC;" },
-      { id:"1.3", nivel:"Básico", concepto:"WHERE + AND",
-        enunciado:"Lista los empleados que ganan más de $35,000 y pertenecen al departamento con id_dep = 1.",
-        pista:"Filtra con WHERE usando AND para combinar condiciones.",
-        respuesta:"SELECT nombre, puesto, salario\nFROM empleados\nWHERE salario > 35000\n  AND id_dep = 1;" },
-      { id:"1.4", nivel:"Básico", concepto:"LIKE + OR",
-        enunciado:"Busca todos los empleados cuyo nombre empiece con la letra 'A' o termine en 'ez'.",
-        pista:"LIKE con % como comodín: 'A%' para empieza con A, '%ez' para termina en ez. Combínalos con OR.",
-        respuesta:"SELECT nombre\nFROM empleados\nWHERE nombre LIKE 'A%'\n   OR nombre LIKE '%ez';" },
-      { id:"1.5", nivel:"Básico", concepto:"IS NULL",
-        enunciado:"Muestra los empleados que NO tienen departamento asignado (id_dep es NULL).",
-        pista:"Para comparar con NULL no se usa = sino IS NULL.",
-        respuesta:"SELECT nombre, puesto\nFROM empleados\nWHERE id_dep IS NULL;" }
-    ]
-  },
-  {
-    fase: "FASE 2", titulo: "Funciones Agregadas", color: "#60a5fa",
-    ejercicios: [
-      { id:"2.1", nivel:"Básico", concepto:"COUNT",
-        enunciado:"¿Cuántos empleados hay en total en la empresa?",
-        pista:"Usa COUNT(*) para contar filas.",
-        respuesta:"SELECT COUNT(*) AS total_empleados\nFROM empleados;" },
-      { id:"2.2", nivel:"Básico", concepto:"AVG / MAX / MIN",
-        enunciado:"Calcula el salario promedio, el salario máximo y el mínimo de toda la empresa.",
-        pista:"Usa AVG, MAX y MIN en el mismo SELECT.",
-        respuesta:"SELECT \n  AVG(salario) AS promedio,\n  MAX(salario) AS maximo,\n  MIN(salario) AS minimo\nFROM empleados;" },
-      { id:"2.3", nivel:"Intermedio", concepto:"GROUP BY",
-        enunciado:"Muestra cuántos empleados hay en cada departamento (por id_dep) y el salario promedio de cada uno.",
-        pista:"Agrupa con GROUP BY. Las funciones agregadas operan por grupo.",
-        respuesta:"SELECT \n  id_dep,\n  COUNT(*) AS num_empleados,\n  AVG(salario) AS salario_promedio\nFROM empleados\nGROUP BY id_dep\nORDER BY id_dep;" },
-      { id:"2.4", nivel:"Intermedio", concepto:"HAVING",
-        enunciado:"Muestra solo los departamentos donde el salario promedio supere los $40,000.",
-        pista:"No puedes usar WHERE con funciones agregadas. Usa HAVING después del GROUP BY.",
-        respuesta:"SELECT \n  id_dep,\n  AVG(salario) AS salario_promedio\nFROM empleados\nGROUP BY id_dep\nHAVING AVG(salario) > 40000;" }
-    ]
-  },
-  {
-    fase: "FASE 3", titulo: "JOINs", color: "#f59e0b",
-    ejercicios: [
-      { id:"3.1", nivel:"Intermedio", concepto:"INNER JOIN",
-        enunciado:"Lista el nombre del empleado junto con el nombre de su departamento. Incluye solo empleados que tengan departamento asignado.",
-        pista:"INNER JOIN conecta dos tablas por una columna en común. Excluye automáticamente los registros sin coincidencia.",
-        respuesta:"SELECT e.nombre AS empleado, d.nombre AS departamento\nFROM empleados e\nINNER JOIN departamentos d ON e.id_dep = d.id_dep;" },
-      { id:"3.2", nivel:"Intermedio", concepto:"LEFT JOIN",
-        enunciado:"Lista TODOS los empleados, incluyendo los que no tienen departamento asignado. Muestra NULL donde no haya departamento.",
-        pista:"LEFT JOIN incluye todos los registros de la tabla izquierda, con NULL en columnas de la derecha cuando no hay coincidencia.",
-        respuesta:"SELECT e.nombre AS empleado, d.nombre AS departamento\nFROM empleados e\nLEFT JOIN departamentos d ON e.id_dep = d.id_dep;" },
-      { id:"3.3", nivel:"Intermedio", concepto:"JOIN de 3 tablas",
-        enunciado:"Muestra el nombre del empleado, el nombre del proyecto y las horas que trabajó en cada proyecto.",
-        pista:"Necesitas unir tres tablas: empleados → asignaciones → proyectos. Encadena dos JOINs.",
-        respuesta:"SELECT \n  e.nombre AS empleado,\n  p.nombre AS proyecto,\n  a.horas\nFROM empleados e\nINNER JOIN asignaciones a ON e.id_emp = a.id_emp\nINNER JOIN proyectos p ON a.id_proy = p.id_proy\nORDER BY e.nombre;" },
-      { id:"3.4", nivel:"Avanzado", concepto:"JOIN + GROUP BY + agregadas",
-        enunciado:"Muestra el nombre del departamento, cuántos empleados tiene y la suma total de sus salarios. Ordena por total de salarios de mayor a menor.",
-        pista:"Combina JOIN con GROUP BY. Agrupa por departamento después de unir las tablas.",
-        respuesta:"SELECT \n  d.nombre AS departamento,\n  COUNT(e.id_emp) AS empleados,\n  SUM(e.salario) AS total_salarios\nFROM departamentos d\nLEFT JOIN empleados e ON d.id_dep = e.id_dep\nGROUP BY d.id_dep, d.nombre\nORDER BY total_salarios DESC NULLS LAST;" }
-    ]
-  },
-  {
-    fase: "FASE 4", titulo: "Subqueries", color: "#a78bfa",
-    ejercicios: [
-      { id:"4.1", nivel:"Intermedio", concepto:"Subquery en WHERE",
-        enunciado:"Encuentra los empleados que ganan más que el promedio general de la empresa.",
-        pista:"Calcula el promedio en una subquery dentro del WHERE.",
-        respuesta:"SELECT nombre, salario\nFROM empleados\nWHERE salario > (SELECT AVG(salario) FROM empleados)\nORDER BY salario DESC;" },
-      { id:"4.2", nivel:"Intermedio", concepto:"IN + subquery",
-        enunciado:"Muestra los empleados que están asignados a al menos un proyecto.",
-        pista:"Usa una subquery con IN para filtrar por los id_emp que aparecen en asignaciones.",
-        respuesta:"SELECT nombre, puesto\nFROM empleados\nWHERE id_emp IN (\n  SELECT DISTINCT id_emp FROM asignaciones\n);" },
-      { id:"4.3", nivel:"Avanzado", concepto:"NOT IN + subquery",
-        enunciado:"Muestra los empleados que NO participan en ningún proyecto.",
-        pista:"Invierte la lógica anterior usando NOT IN.",
-        respuesta:"SELECT nombre, puesto\nFROM empleados\nWHERE id_emp NOT IN (\n  SELECT DISTINCT id_emp FROM asignaciones\n);" },
-      { id:"4.4", nivel:"Avanzado", concepto:"Subquery correlacionada",
-        enunciado:"Lista el nombre de cada empleado y cuántos proyectos tiene asignados. Incluye empleados sin proyectos (mostrar 0).",
-        pista:"Usa una subquery correlacionada en el SELECT, no en el WHERE.",
-        respuesta:"SELECT \n  nombre,\n  (SELECT COUNT(*) \n   FROM asignaciones a \n   WHERE a.id_emp = e.id_emp) AS num_proyectos\nFROM empleados e\nORDER BY num_proyectos DESC;" }
-    ]
-  },
-  {
-    fase: "FASE 5", titulo: "DML: INSERT, UPDATE, DELETE", color: "#f87171",
-    ejercicios: [
-      { id:"5.1", nivel:"Básico", concepto:"INSERT",
-        enunciado:"Agrega un nuevo departamento llamado 'Marketing' ubicado en 'Ciudad de México'.",
-        pista:"INSERT INTO tabla (col1, col2) VALUES (val1, val2). No incluyas id_dep si es SERIAL.",
-        respuesta:"INSERT INTO departamentos (nombre, ciudad)\nVALUES ('Marketing', 'Ciudad de México');" },
-      { id:"5.2", nivel:"Básico", concepto:"UPDATE con WHERE",
-        enunciado:"El empleado Roberto Gil (id 10) fue asignado al departamento de Tecnología (id 1). Actualiza su registro.",
-        pista:"UPDATE tabla SET columna = valor WHERE condición. El WHERE es crítico: sin él modificas TODOS los registros.",
-        respuesta:"UPDATE empleados\nSET id_dep = 1\nWHERE id_emp = 10;" },
-      { id:"5.3", nivel:"Intermedio", concepto:"UPDATE con cálculo",
-        enunciado:"Aplica un aumento del 10% a todos los empleados del departamento de Tecnología (id_dep = 1).",
-        pista:"Puedes usar el valor actual de la columna en el SET: SET salario = salario * 1.10",
-        respuesta:"UPDATE empleados\nSET salario = salario * 1.10\nWHERE id_dep = 1;" },
-      { id:"5.4", nivel:"Intermedio", concepto:"DELETE + integridad referencial",
-        enunciado:"Elimina a Elena Soto (id 9) de la empresa. Considera que puede tener asignaciones registradas.",
-        pista:"Por integridad referencial, primero elimina sus registros dependientes (asignaciones), luego el empleado.",
-        respuesta:"-- Primero eliminar registros dependientes\nDELETE FROM asignaciones\nWHERE id_emp = 9;\n\n-- Luego eliminar el empleado\nDELETE FROM empleados\nWHERE id_emp = 9;" }
-    ]
-  },
-  {
-    fase: "FASE 6", titulo: "DDL: Tablas y Constraints", color: "#34d399",
-    ejercicios: [
-      { id:"6.1", nivel:"Intermedio", concepto:"CREATE TABLE + constraints",
-        enunciado:"Crea una tabla 'clientes' con: id (clave primaria autoincremental), nombre (obligatorio, max 150 chars), email (único, obligatorio), saldo (decimal, por defecto 0), fecha_registro (fecha, por defecto la fecha actual).",
-        pista:"Usa SERIAL para autoincremento, NOT NULL para obligatorio, UNIQUE para únicos, DEFAULT para valores por defecto.",
-        respuesta:"CREATE TABLE clientes (\n  id             SERIAL PRIMARY KEY,\n  nombre         VARCHAR(150) NOT NULL,\n  email          VARCHAR(200) NOT NULL UNIQUE,\n  saldo          NUMERIC(10,2) DEFAULT 0,\n  fecha_registro DATE DEFAULT CURRENT_DATE\n);" },
-      { id:"6.2", nivel:"Intermedio", concepto:"ALTER TABLE",
-        enunciado:"Agrega una columna 'telefono' de tipo VARCHAR(20) a la tabla clientes.",
-        pista:"ALTER TABLE permite modificar una tabla existente. Para agregar columnas usa ADD COLUMN.",
-        respuesta:"ALTER TABLE clientes\nADD COLUMN telefono VARCHAR(20);" },
-      { id:"6.3", nivel:"Avanzado", concepto:"CREATE VIEW",
-        enunciado:"Crea una vista llamada 'vista_empleados_dep' que muestre: nombre del empleado, su puesto, salario y nombre del departamento. Luego consulta esa vista.",
-        pista:"CREATE VIEW nombre AS SELECT... Una vista es una query guardada que puedes consultar como si fuera una tabla.",
-        respuesta:"CREATE VIEW vista_empleados_dep AS\nSELECT \n  e.nombre AS empleado,\n  e.puesto,\n  e.salario,\n  d.nombre AS departamento\nFROM empleados e\nLEFT JOIN departamentos d ON e.id_dep = d.id_dep;\n\n-- Consultar la vista:\nSELECT * FROM vista_empleados_dep\nORDER BY departamento, salario DESC;" }
-    ]
-  },
-  {
-    fase: "FASE 7", titulo: "Seguridad y Permisos", color: "#fb923c",
-    ejercicios: [
-      { id:"7.1", nivel:"Intermedio", concepto:"CREATE USER + GRANT",
-        enunciado:"Crea un usuario llamado 'analista_ro' con contraseña 'Segura123!' que solo pueda hacer SELECT en la tabla empleados.",
-        pista:"CREATE USER para crear el usuario, GRANT SELECT ON tabla TO usuario para dar permiso específico.",
-        respuesta:"-- Crear el usuario\nCREATE USER analista_ro WITH PASSWORD 'Segura123!';\n\n-- Dar solo permiso de lectura en empleados\nGRANT SELECT ON empleados TO analista_ro;" },
-      { id:"7.2", nivel:"Intermedio", concepto:"REVOKE",
-        enunciado:"Revocar el permiso SELECT que se le dio a 'analista_ro' sobre la tabla empleados.",
-        pista:"REVOKE es el inverso de GRANT. La sintaxis es casi idéntica.",
-        respuesta:"REVOKE SELECT ON empleados FROM analista_ro;" },
-      { id:"7.3", nivel:"Avanzado", concepto:"ROLE + GRANT",
-        enunciado:"Crea un rol llamado 'rol_reportes' con permisos SELECT en empleados, departamentos y proyectos. Luego asigna ese rol a 'analista_ro'.",
-        pista:"Los roles son contenedores de permisos reutilizables. Crear el rol, darle permisos, luego asignarlo al usuario.",
-        respuesta:"-- Crear el rol\nCREATE ROLE rol_reportes;\n\n-- Asignar permisos al rol\nGRANT SELECT ON empleados TO rol_reportes;\nGRANT SELECT ON departamentos TO rol_reportes;\nGRANT SELECT ON proyectos TO rol_reportes;\n\n-- Asignar el rol al usuario\nGRANT rol_reportes TO analista_ro;" }
-    ]
-  },
-  {
-    fase: "FASE 8", titulo: "SQL Injection", color: "#e879f9",
-    ejercicios: [
-      { id:"8.1", nivel:"Avanzado", concepto:"SQLi + Prepared Statements",
-        enunciado:"Un sistema de login construye esta query dinámicamente:\nSELECT * FROM empleados WHERE nombre = '[INPUT]' AND password = '[INPUT]'\n\nUn atacante escribe como nombre: ' OR '1'='1\n¿Qué query se ejecuta realmente? ¿Por qué es peligroso?",
-        pista:"Escribe la query resultante sustituyendo el input del atacante. Analiza qué condición se evalúa.",
-        respuesta:"-- Query resultante con el input malicioso:\nSELECT * FROM empleados \nWHERE nombre = '' OR '1'='1' \n  AND password = 'cualquiercosa';\n\n-- POR QUÉ ES PELIGROSO:\n-- '1'='1' siempre es TRUE → el WHERE se cumple para TODOS los registros.\n-- El atacante obtiene acceso sin conocer ninguna contraseña.\n\n-- DEFENSA: Usar parámetros preparados (prepared statements)\n-- SELECT * FROM empleados WHERE nombre = $1 AND password = $2\n-- con los valores separados del SQL. La inyección es imposible." },
-      { id:"8.2", nivel:"Avanzado", concepto:"Mínimo privilegio + SQLi defense",
-        enunciado:"¿Cómo aplicarías el principio de mínimo privilegio para reducir el impacto de un SQLi exitoso en una app de reportes?",
-        pista:"Piensa en qué permisos necesita realmente una app que solo lee datos. Conecta esto con la Fase 7.",
-        respuesta:"-- Crear un usuario específico para la app (no usar el admin)\nCREATE USER app_reportes WITH PASSWORD 'AppReportes2024!';\n\n-- Dar SOLO los permisos necesarios\nGRANT SELECT ON empleados TO app_reportes;\nGRANT SELECT ON departamentos TO app_reportes;\nGRANT SELECT ON proyectos TO app_reportes;\n-- SIN GRANT en INSERT, UPDATE, DELETE, DROP\n\n-- Si un atacante explota SQLi en esta app,\n-- NO podrá borrar datos ni modificar registros.\n-- El daño queda contenido.\n-- Relevante: CompTIA Security+ dominio Access Control" }
-    ]
-  }
-];
-
-const nivelColors = { "Básico": "#4ade80", "Intermedio": "#f59e0b", "Avanzado": "#f87171" };
-const completados = {};
-const revelados = {};
-let faseActiva = 0;
-let verSchema = false;
-
-const totalEjs = fases.reduce((a, f) => a + f.ejercicios.length, 0);
-
-function totalComp() {
-  return Object.values(completados).filter(Boolean).length;
-}
-
-function updateProgress() {
-  const comp = totalComp();
-  const pct = Math.round((comp / totalEjs) * 100);
-  document.getElementById('pct-text').textContent = pct + '%';
-  document.getElementById('ring-text').textContent = comp + '/' + totalEjs;
-  document.getElementById('ring-fill').setAttribute('stroke-dasharray', pct + ' ' + (100 - pct));
-  const color = faseActiva < fases.length ? fases[faseActiva].color : '#60a5fa';
-  document.getElementById('ring-fill').style.stroke = color;
-  document.getElementById('pct-text').style.color = color;
-  renderSidebar();
-}
-
-function renderSidebar() {
-  const sb = document.getElementById('sidebar');
-  let html = '';
-  fases.forEach((f, i) => {
-    const comp = f.ejercicios.filter(e => completados[e.id]).length;
-    const active = !verSchema && i === faseActiva;
-    html += `<div class="nav-item ${active ? 'active' : ''}" style="--item-color:${f.color}" onclick="setFase(${i})">
-      <div class="fase-label">${f.fase}</div>
-      <div class="fase-title">${f.titulo}</div>
-      <div class="fase-prog">${comp}/${f.ejercicios.length} completados</div>
-    </div>`;
-  });
-  html += `<div class="nav-divider"></div>`;
-  html += `<div class="nav-schema ${verSchema ? 'active' : ''}" onclick="setSchema()">
-    <div class="fase-label">REFERENCIA</div>
-    <div class="fase-title">Schema SQL</div>
+-- En psql (terminal):
+\\dt             -- lista tablas
+\\d empleados    -- describe la tabla empleados
+\\du             -- lista usuarios</div>
   </div>`;
-  sb.innerHTML = html;
 }
 
-function renderMain() {
-  const main = document.getElementById('main');
-  if (verSchema) {
-    main.innerHTML = `<div class="schema-section">
-      <p>Ejecuta este script en PostgreSQL para tener la base de datos de práctica lista.</p>
-      <pre>${SCHEMA}</pre>
-    </div>`;
-    return;
-  }
-  const f = fases[faseActiva];
-  let html = `<div class="fase-header">
-    <span class="fl" style="color:${f.color}">${f.fase}</span>
-    <h2>${f.titulo}</h2>
-  </div>`;
-  f.ejercicios.forEach(ej => {
-    const done = completados[ej.id];
-    const rev = revelados[ej.id];
-    const nc = nivelColors[ej.nivel];
-    html += `<div class="card ${done ? 'done' : ''}" style="--card-color:${f.color}">
-      <div class="card-head">
-        <div class="card-meta">
-          <span class="card-id">Ejercicio ${ej.id}</span>
-          <span class="badge badge-nivel" style="color:${nc};border-color:${nc}55">${ej.nivel.toUpperCase()}</span>
-          <span class="badge badge-concepto">${ej.concepto}</span>
-        </div>
-        <button class="btn-done ${done ? 'active' : ''}" style="--card-color:${f.color}" onclick="toggleDone('${ej.id}')">
-          ${done ? '✓ Completado' : 'Marcar listo'}
-        </button>
-      </div>
-      <div class="card-body">
-        <div class="enunciado">${ej.enunciado}</div>
-        <div class="pista"><span>💡 Pista:</span>${ej.pista}</div>
-        <button class="btn-sol" onclick="toggleRev('${ej.id}')">
-          ${rev ? '▲ Ocultar solución' : '▼ Ver solución'}
-        </button>
-        <div class="solucion ${rev ? 'visible' : ''}">
-          <pre>${ej.respuesta}</pre>
-        </div>
-      </div>
-    </div>`;
-  });
-  main.innerHTML = html;
-}
-
-function setFase(i) {
-  faseActiva = i;
-  verSchema = false;
-  renderSidebar();
-  renderMain();
-  updateProgress();
-}
-
-function setSchema() {
-  verSchema = true;
-  renderSidebar();
-  renderMain();
-}
-
-function toggleDone(id) {
-  completados[id] = !completados[id];
-  renderMain();
-  updateProgress();
-}
-
-function toggleRev(id) {
-  revelados[id] = !revelados[id];
-  renderMain();
-}
-
-// Init
-renderSidebar();
-renderMain();
-updateProgress();
+// ─────────────────────────────────────────
+// START
+// ─────────────────────────────────────────
+init().catch(e=>{ 
+  document.getElementById('loading').innerHTML=
+    `<div style="color:#f87171;font-size:13px">Error al cargar: ${e.message}<br><br>Verifica tu conexión a internet.</div>`;
+});
 </script>
 </body>
 </html>
